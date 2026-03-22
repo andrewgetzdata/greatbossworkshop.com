@@ -1,6 +1,7 @@
 ---
 import workshop from "../data/workshop.json";
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const stats = [
   { value: workshop.instructor.sessions, label: "EOS Sessions" },
   { value: workshop.instructor.yearsExperience, label: "Years Leading" },
@@ -10,35 +11,32 @@ const stats = [
 
 <section id="instructor" class="bg-eos-light py-16 md:py-24">
   <div class="mx-auto max-w-5xl px-4">
-    <h2 class="text-center text-3xl font-bold text-eos-navy md:text-4xl">Your Instructor</h2>
+    <h2 class="text-center text-3xl font-bold text-eos-dark md:text-4xl">Your Instructor</h2>
 
     <div class="mt-12 flex flex-col items-center gap-8 md:flex-row md:gap-12">
-      <!-- Photo -->
       <div class="shrink-0">
         <div class="h-64 w-64 overflow-hidden rounded-2xl bg-gray-200 shadow-lg">
           <img
-            src={workshop.instructor.photo}
+            src={`${base}${workshop.instructor.photo}`}
             alt={`${workshop.instructor.name} - ${workshop.instructor.title}`}
             class="h-full w-full object-cover"
             loading="lazy"
-            onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'flex h-full w-full items-center justify-center bg-eos-navy text-white text-4xl font-bold\'>RG</div>'"
+            onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'flex h-full w-full items-center justify-center bg-eos-dark text-white text-4xl font-bold\'>RG</div>'"
           />
         </div>
       </div>
 
-      <!-- Bio -->
       <div class="text-center md:text-left">
-        <h3 class="text-2xl font-bold text-eos-navy">{workshop.instructor.name}</h3>
-        <p class="mt-1 font-medium text-eos-teal">{workshop.instructor.title}</p>
+        <h3 class="text-2xl font-bold text-eos-dark">{workshop.instructor.name}</h3>
+        <p class="mt-1 font-medium text-eos-orange">{workshop.instructor.title}</p>
         <p class="mt-4 text-lg leading-relaxed text-gray-600">
           {workshop.instructor.bio}
         </p>
 
-        <!-- Stats -->
         <div class="mt-6 flex flex-wrap justify-center gap-6 md:justify-start">
           {stats.map((stat) => (
             <div class="text-center">
-              <div class="text-2xl font-bold text-eos-teal">{stat.value}</div>
+              <div class="text-2xl font-bold text-eos-orange">{stat.value}</div>
               <div class="text-xs font-medium uppercase tracking-wide text-gray-500">{stat.label}</div>
             </div>
           ))}

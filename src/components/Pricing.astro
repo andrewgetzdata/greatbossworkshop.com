@@ -1,6 +1,5 @@
 ---
 import workshop from "../data/workshop.json";
-import StripeCheckout from "./StripeCheckout.tsx";
 
 const baseFormatted = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -18,35 +17,35 @@ const inclusions = [
   "Full-day workshop (7 hours)",
   "Great Boss Toolkit",
   "Lunch and all materials",
-  "Quarterly Conversations™ framework",
+  "Quarterly Conversations\u2122 framework",
   "Post-workshop resources",
 ];
 ---
 
-<section id="pricing" class="bg-eos-navy py-16 text-white md:py-24">
+<section id="pricing" class="bg-eos-dark py-16 text-white md:py-24">
   <div class="mx-auto max-w-4xl px-4">
     <div class="text-center">
       <h2 class="text-3xl font-bold md:text-4xl">Invest in Your Leadership</h2>
-      <p class="mx-auto mt-3 max-w-xl text-lg text-gray-300">
+      <p class="mx-auto mt-3 max-w-xl text-lg text-gray-400">
         Choose your preferred payment method. Save by paying with a bank transfer.
       </p>
     </div>
 
     <div class="mt-12 grid gap-6 md:grid-cols-2">
       <!-- ACH Card -->
-      <div class="relative overflow-hidden rounded-2xl border-2 border-eos-gold bg-white p-8 text-gray-900 shadow-xl">
-        <div class="absolute right-0 top-0 rounded-bl-lg bg-eos-gold px-3 py-1 text-xs font-bold uppercase tracking-wide text-eos-navy">
+      <div class="relative overflow-hidden rounded-2xl border-2 border-eos-orange bg-white p-8 text-gray-900 shadow-xl">
+        <div class="absolute right-0 top-0 rounded-bl-lg bg-eos-orange px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
           Recommended
         </div>
 
-        <p class="text-sm font-semibold uppercase tracking-wide text-eos-teal">Bank Transfer (ACH)</p>
-        <p class="mt-2 text-4xl font-extrabold text-eos-navy">{baseFormatted}</p>
+        <p class="text-sm font-semibold uppercase tracking-wide text-eos-orange">Bank Transfer (ACH)</p>
+        <p class="mt-2 text-4xl font-black text-eos-dark">{baseFormatted}</p>
         <p class="mt-1 text-sm text-gray-500">No processing fee</p>
 
         <ul class="mt-6 space-y-3">
           {inclusions.map((item) => (
             <li class="flex items-start gap-2">
-              <svg class="mt-0.5 h-5 w-5 shrink-0 text-eos-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg class="mt-0.5 h-5 w-5 shrink-0 text-eos-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
               <span class="text-gray-700">{item}</span>
@@ -57,14 +56,14 @@ const inclusions = [
 
       <!-- Card -->
       <div class="rounded-2xl border border-gray-200 bg-white p-8 text-gray-900 shadow-xl">
-        <p class="text-sm font-semibold uppercase tracking-wide text-eos-teal">Credit / Debit Card</p>
-        <p class="mt-2 text-4xl font-extrabold text-eos-navy">{cardFormatted}</p>
+        <p class="text-sm font-semibold uppercase tracking-wide text-eos-orange">Credit / Debit Card</p>
+        <p class="mt-2 text-4xl font-black text-eos-dark">{cardFormatted}</p>
         <p class="mt-1 text-sm text-gray-500">Includes {workshop.pricing.cardSurchargePercent}% processing fee</p>
 
         <ul class="mt-6 space-y-3">
           {inclusions.map((item) => (
             <li class="flex items-start gap-2">
-              <svg class="mt-0.5 h-5 w-5 shrink-0 text-eos-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg class="mt-0.5 h-5 w-5 shrink-0 text-eos-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
               <span class="text-gray-700">{item}</span>
@@ -75,17 +74,56 @@ const inclusions = [
     </div>
 
     <!-- Stripe Checkout Buttons -->
-    <div class="mt-8">
-      <StripeCheckout
-        client:visible
-        achPrice={workshop.pricing.basePrice}
-        cardPrice={workshop.pricing.cardPrice}
-        workshopTitle={workshop.title}
-      />
+    <div class="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+      <button
+        data-checkout="ach"
+        class="w-full rounded-lg bg-eos-orange px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-eos-orange-light hover:shadow-xl sm:w-auto"
+        style="min-height:44px; max-width:320px;"
+      >
+        Pay {baseFormatted} by Bank Transfer
+      </button>
+
+      <button
+        data-checkout="card"
+        class="w-full rounded-lg border-2 border-white bg-transparent px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-white/10 hover:shadow-xl sm:w-auto"
+        style="min-height:44px; max-width:320px;"
+      >
+        Pay {cardFormatted} by Card
+      </button>
     </div>
 
-    <p class="mt-6 text-center text-sm text-gray-400">
+    <p class="mt-6 text-center text-sm text-gray-500">
       Secure payment powered by Stripe. Full refund available 14+ days before the workshop.
     </p>
   </div>
 </section>
+
+<script is:inline>
+  document.querySelectorAll('[data-checkout]').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      var method = btn.getAttribute('data-checkout');
+      var originalText = btn.textContent;
+      btn.textContent = 'Redirecting...';
+      btn.disabled = true;
+
+      if (window.posthog) {
+        window.posthog.capture('checkout_started', { method: method });
+      }
+
+      try {
+        var res = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentMethod: method }),
+        });
+        if (!res.ok) throw new Error('Failed');
+        var data = await res.json();
+        window.location.href = data.url;
+      } catch (e) {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        alert('Something went wrong. Please try again or contact us for assistance.');
+      }
+    });
+  });
+</script>
