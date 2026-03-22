@@ -1,0 +1,50 @@
+---
+import workshop from "../data/workshop.json";
+
+const priceFormatted = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: workshop.pricing.currency,
+  minimumFractionDigits: 0,
+}).format(workshop.pricing.basePrice);
+---
+
+<div
+  id="sticky-mobile-cta"
+  class="fixed bottom-0 left-0 right-0 z-50 translate-y-full border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] transition-transform duration-300 md:hidden"
+  aria-hidden="true"
+>
+  <a
+    href="#pricing"
+    class="block w-full rounded-lg bg-eos-teal py-3.5 text-center text-base font-bold text-white shadow-sm transition hover:bg-eos-teal-dark"
+    data-cta="sticky"
+    style="min-height: 44px;"
+  >
+    Reserve Your Seat — From {priceFormatted}
+  </a>
+</div>
+
+<script is:inline>
+  (function() {
+    var hero = document.getElementById('hero');
+    var sticky = document.getElementById('sticky-mobile-cta');
+    if (!hero || !sticky) return;
+
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          sticky.classList.add('translate-y-full');
+          sticky.setAttribute('aria-hidden', 'true');
+        } else {
+          sticky.classList.remove('translate-y-full');
+          sticky.setAttribute('aria-hidden', 'false');
+        }
+      });
+    }, { threshold: 0 });
+
+    observer.observe(hero);
+
+    sticky.querySelector('[data-cta="sticky"]').addEventListener('click', function() {
+      if (window.posthog) window.posthog.capture('cta_clicked', { source: 'sticky_mobile' });
+    });
+  })();
+</script>

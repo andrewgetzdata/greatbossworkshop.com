@@ -1,0 +1,126 @@
+{
+  "title": "Great Boss Workshop",
+  "tagline": "Develop accountable, high-performing teams",
+  "date": "TBD",
+  "dateDisplay": "Next Workshop Date Coming Soon",
+  "time": "9:00 AM – 4:00 PM ET",
+  "duration": "7 hours",
+  "location": {
+    "name": "EOS Worldwide Columbus",
+    "address": "1103 Schrock Court, Suite 402",
+    "city": "Columbus",
+    "state": "OH",
+    "zip": "43229",
+    "mapsUrl": "https://maps.google.com/?q=1103+Schrock+Court+Suite+402+Columbus+OH+43229"
+  },
+  "pricing": {
+    "basePrice": 1095,
+    "cardSurchargePercent": 3,
+    "cardPrice": 1128,
+    "currency": "USD"
+  },
+  "maxAttendees": 25,
+  "instructor": {
+    "name": "Roy Getz",
+    "title": "Expert EOS Implementer",
+    "photo": "/images/roy-getz.jpg",
+    "sessions": "650+",
+    "yearsExperience": "40+",
+    "bio": "Roy Getz is an Expert EOS Implementer with over 40 years of leading and managing people. With 650+ full-day EOS sessions under his belt, Roy brings passion, energy, and authenticity to every workshop — sharing real-life successes and failures to help leaders build stronger, more cohesive organizations."
+  },
+  "agenda": [
+    {
+      "time": "9:00 AM",
+      "topic": "Five Leadership Practices™",
+      "description": "Master the essential practices that separate great bosses from average managers."
+    },
+    {
+      "time": "10:30 AM",
+      "topic": "Five Management Practices™",
+      "description": "Learn the day-to-day management disciplines that drive accountability and results."
+    },
+    {
+      "time": "12:00 PM",
+      "topic": "Working Lunch & Discussion",
+      "description": "Network with fellow leaders and discuss real-world challenges over lunch."
+    },
+    {
+      "time": "1:00 PM",
+      "topic": "Quarterly Conversations™",
+      "description": "The structured conversation framework that replaces painful annual reviews with meaningful check-ins."
+    },
+    {
+      "time": "2:30 PM",
+      "topic": "Great Boss Toolkit & Action Planning",
+      "description": "Walk away with practical tools and a concrete plan you can implement Monday morning."
+    }
+  ],
+  "painPoints": [
+    {
+      "headline": "Your best people keep leaving",
+      "description": "You invest in hiring great talent, but they leave within 18 months because they don't feel developed or challenged."
+    },
+    {
+      "headline": "Accountability feels like micromanaging",
+      "description": "You know your team needs more accountability, but every attempt feels like you're breathing down their necks."
+    },
+    {
+      "headline": "Annual reviews are dreaded by everyone",
+      "description": "The annual review process consumes weeks and produces nothing actionable. Both you and your team dread it."
+    },
+    {
+      "headline": "You're doing their job instead of yours",
+      "description": "You spend more time fixing your team's problems than leading. You're the bottleneck, and you know it."
+    }
+  ],
+  "faq": [
+    {
+      "question": "Who is this workshop for?",
+      "answer": "Any leader, manager, or boss who wants to build a more accountable, high-performing team. Whether you run a company or manage a department, you'll leave with practical tools you can use immediately."
+    },
+    {
+      "question": "Do I need to be running EOS to attend?",
+      "answer": "No. While the workshop uses EOS terminology and frameworks, the leadership and management practices are universal and valuable for any organization."
+    },
+    {
+      "question": "What is your refund policy?",
+      "answer": "Full refund if you cancel 14+ days before the workshop. 50% refund for cancellations 7–13 days out. No refunds within 7 days of the event, but you may send a substitute attendee at no extra charge."
+    },
+    {
+      "question": "What should I bring?",
+      "answer": "Just yourself and an open mind. All materials, workbooks, and the Great Boss Toolkit are provided. Lunch is included."
+    },
+    {
+      "question": "Why are there two prices?",
+      "answer": "We pass through the ~3% credit card processing fee to keep the base price as low as possible. Pay by bank transfer (ACH) to get the lower price — it's fast, secure, and saves you money."
+    },
+    {
+      "question": "How many people attend each workshop?",
+      "answer": "Workshops are capped at 25 attendees to ensure a hands-on, interactive experience with plenty of time for individual questions and discussion."
+    }
+  ],
+  "testimonials": [
+    {
+      "quote": "This workshop completely changed how I lead my team. The Quarterly Conversations framework alone was worth the investment.",
+      "author": "Workshop Attendee",
+      "title": "CEO",
+      "type": "text"
+    },
+    {
+      "quote": "Roy's energy is contagious. I left with a clear action plan and the confidence to implement it. My team noticed the difference within weeks.",
+      "author": "Workshop Attendee",
+      "title": "VP of Operations",
+      "type": "text"
+    },
+    {
+      "quote": "I've been managing people for 20 years and still learned more in one day than I did in years of trial and error.",
+      "author": "Workshop Attendee",
+      "title": "Director of Engineering",
+      "type": "text"
+    }
+  ],
+  "meta": {
+    "description": "Work alongside an EOS Implementer and other bosses to learn how to develop more accountable, high-performing teams. Led by Roy Getz, Expert EOS Implementer with 650+ sessions.",
+    "ogImage": "/images/og-image.jpg"
+  }
+}
