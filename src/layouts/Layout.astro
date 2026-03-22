@@ -1,0 +1,129 @@
+---
+import "../styles/global.css";
+import workshop from "../data/workshop.json";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = workshop.meta.description } = Astro.props;
+const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
+const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://greatbossworkshop.com";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "EducationEvent",
+  name: workshop.title,
+  description: workshop.meta.description,
+  startDate: workshop.date !== "TBD" ? workshop.date : undefined,
+  location: {
+    "@type": "Place",
+    name: workshop.location.name,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: workshop.location.address,
+      addressLocality: workshop.location.city,
+      addressRegion: workshop.location.state,
+      postalCode: workshop.location.zip,
+      addressCountry: "US",
+    },
+  },
+  organizer: {
+    "@type": "Person",
+    name: workshop.instructor.name,
+    jobTitle: workshop.instructor.title,
+  },
+  offers: {
+    "@type": "Offer",
+    price: workshop.pricing.basePrice.toString(),
+    priceCurrency: workshop.pricing.currency,
+    availability: "https://schema.org/InStock",
+  },
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={`${siteUrl}${workshop.meta.ogImage}`} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={siteUrl} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={`${siteUrl}${workshop.meta.ogImage}`} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <!-- PostHog -->
+    {posthogKey && (
+      <script is:inline define:vars={{ posthogKey, posthogHost }}>
+        !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId setPersonProperties".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+        posthog.init(posthogKey, { api_host: posthogHost });
+      </script>
+    )}
+  </head>
+  <body class="font-sans text-gray-900 antialiased">
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded focus:bg-eos-teal focus:px-4 focus:py-2 focus:text-white">
+      Skip to content
+    </a>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="border-t border-gray-200 bg-white py-8 text-center text-sm text-gray-500">
+      <div class="mx-auto max-w-4xl px-4">
+        <p>&copy; {new Date().getFullYear()} {workshop.instructor.name}, {workshop.instructor.title}</p>
+        <p class="mt-1">
+          Powered by the
+          <a href="https://www.eosworldwide.com" target="_blank" rel="noopener noreferrer" class="text-eos-teal hover:underline">
+            Entrepreneurial Operating System (EOS)
+          </a>
+        </p>
+      </div>
+    </footer>
+
+    <!-- Scroll depth tracking -->
+    <script is:inline>
+      (function() {
+        var tracked = {};
+        var sentinels = [25, 50, 75, 100];
+        function checkScroll() {
+          var pct = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+          sentinels.forEach(function(t) {
+            if (pct >= t && !tracked[t]) {
+              tracked[t] = true;
+              if (window.posthog) window.posthog.capture('scroll_depth', { depth: t });
+            }
+          });
+        }
+        window.addEventListener('scroll', checkScroll, { passive: true });
+      })();
+    </script>
+  </body>
+</html>
