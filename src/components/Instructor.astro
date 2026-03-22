@@ -1,6 +1,7 @@
 ---
 import workshop from "../data/workshop.json";
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const stats = [
   { value: workshop.instructor.sessions, label: "EOS Sessions" },
   { value: workshop.instructor.yearsExperience, label: "Years Leading" },
@@ -16,7 +17,7 @@ const stats = [
       <div class="shrink-0">
         <div class="h-64 w-64 overflow-hidden rounded-2xl bg-gray-200 shadow-lg">
           <img
-            src={workshop.instructor.photo}
+            src={`${base}${workshop.instructor.photo}`}
             alt={`${workshop.instructor.name} - ${workshop.instructor.title}`}
             class="h-full w-full object-cover"
             loading="lazy"
