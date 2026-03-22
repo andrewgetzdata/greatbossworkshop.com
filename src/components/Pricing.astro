@@ -1,6 +1,5 @@
 ---
 import workshop from "../data/workshop.json";
-import StripeCheckout from "./StripeCheckout.tsx";
 
 const baseFormatted = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -75,13 +74,22 @@ const inclusions = [
     </div>
 
     <!-- Stripe Checkout Buttons -->
-    <div class="mt-8">
-      <StripeCheckout
-        client:visible
-        achPrice={workshop.pricing.basePrice}
-        cardPrice={workshop.pricing.cardPrice}
-        workshopTitle={workshop.title}
-      />
+    <div class="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+      <button
+        data-checkout="ach"
+        class="w-full rounded-lg bg-eos-orange px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-eos-orange-light hover:shadow-xl sm:w-auto"
+        style="min-height:44px; max-width:320px;"
+      >
+        Pay {baseFormatted} by Bank Transfer
+      </button>
+
+      <button
+        data-checkout="card"
+        class="w-full rounded-lg border-2 border-white bg-transparent px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-white/10 hover:shadow-xl sm:w-auto"
+        style="min-height:44px; max-width:320px;"
+      >
+        Pay {cardFormatted} by Card
+      </button>
     </div>
 
     <p class="mt-6 text-center text-sm text-gray-500">
@@ -89,3 +97,33 @@ const inclusions = [
     </p>
   </div>
 </section>
+
+<script is:inline>
+  document.querySelectorAll('[data-checkout]').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      var method = btn.getAttribute('data-checkout');
+      var originalText = btn.textContent;
+      btn.textContent = 'Redirecting...';
+      btn.disabled = true;
+
+      if (window.posthog) {
+        window.posthog.capture('checkout_started', { method: method });
+      }
+
+      try {
+        var res = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentMethod: method }),
+        });
+        if (!res.ok) throw new Error('Failed');
+        var data = await res.json();
+        window.location.href = data.url;
+      } catch (e) {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        alert('Something went wrong. Please try again or contact us for assistance.');
+      }
+    });
+  });
+</script>
