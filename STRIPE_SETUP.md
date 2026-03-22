@@ -25,14 +25,14 @@ Step-by-step instructions for configuring Stripe payments for the Great Boss Wor
 
 ### Price 1: ACH / Bank Transfer
 - Click **Add another price**
-- **Price**: `$1,095.00`
+- **Price**: `$950.00`
 - **Billing period**: One time
 - **Price description**: `Bank Transfer (ACH)`
 - Copy the **Price ID** (starts with `price_`) — you'll need this
 
 ### Price 2: Credit/Debit Card
 - Click **Add another price**
-- **Price**: `$1,128.00`
+- **Price**: `$979.00`
 - **Billing period**: One time
 - **Price description**: `Credit/Debit Card (includes 3% processing fee)`
 - Copy the **Price ID** (starts with `price_`) — you'll need this
@@ -124,9 +124,9 @@ To set up a new workshop date:
 
 ## Fee Summary
 
-| Method | Fee | Cost on $1,095 | You Keep |
-|--------|-----|-----------------|----------|
-| ACH (Bank Transfer) | 0.8% capped at $5 | $5.00 | $1,090.00 |
-| Credit/Debit Card | 2.9% + $0.30 | $32.06 | $1,095.94* |
+| Method | Fee | Cost on $950 | You Keep |
+|--------|-----|--------------|----------|
+| ACH (Bank Transfer) | 0.8% capped at $5 | $5.00 | $945.00 |
+| Credit/Debit Card | 2.9% + $0.30 | $27.85 | $951.15* |
 
-*Card customers pay $1,128, so after the $32.06 fee you keep $1,095.94 — effectively recovering the processing cost.
+*Card customers pay $979, so after the $27.85 fee you keep $951.15 — effectively recovering the processing cost.
