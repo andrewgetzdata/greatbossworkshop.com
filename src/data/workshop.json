@@ -14,9 +14,9 @@
     "mapsUrl": "https://maps.google.com/?q=1103+Schrock+Court+Suite+402+Columbus+OH+43229"
   },
   "pricing": {
-    "basePrice": 1095,
+    "basePrice": 950,
     "cardSurchargePercent": 3,
-    "cardPrice": 1128,
+    "cardPrice": 979,
     "currency": "USD"
   },
   "maxAttendees": 25,
