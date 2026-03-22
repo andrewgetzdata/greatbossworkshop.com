@@ -59,7 +59,7 @@ export default function StripeCheckout({
       <button
         onClick={() => handleCheckout("ach")}
         disabled={loading !== null}
-        className="w-full rounded-lg bg-eos-gold px-6 py-4 text-lg font-bold text-eos-navy shadow-lg transition hover:bg-yellow-500 hover:shadow-xl disabled:cursor-wait disabled:opacity-70 sm:w-auto"
+        className="w-full rounded-lg bg-eos-orange px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-eos-orange-light hover:shadow-xl disabled:cursor-wait disabled:opacity-70 sm:w-auto"
         style={{ minHeight: "44px" }}
       >
         {loading === "ach"

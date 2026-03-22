@@ -5,7 +5,7 @@ import workshop from "../data/workshop.json";
 <section id="agenda" class="bg-white py-16 md:py-24">
   <div class="mx-auto max-w-3xl px-4">
     <div class="text-center">
-      <h2 class="text-3xl font-bold text-eos-navy md:text-4xl">What You'll Learn</h2>
+      <h2 class="text-3xl font-bold text-eos-dark md:text-4xl">What You'll Learn</h2>
       <p class="mx-auto mt-3 max-w-2xl text-lg text-gray-600">
         A full-day, hands-on workshop covering the complete EOS leadership toolkit.
       </p>
@@ -13,14 +13,12 @@ import workshop from "../data/workshop.json";
 
     <div class="mt-12">
       <div class="relative">
-        <!-- Timeline line -->
-        <div class="absolute left-[3.25rem] top-0 hidden h-full w-0.5 bg-eos-teal/20 md:block" aria-hidden="true"></div>
+        <div class="absolute left-[3.25rem] top-0 hidden h-full w-0.5 bg-eos-orange/20 md:block" aria-hidden="true"></div>
 
         <div class="space-y-8">
-          {workshop.agenda.map((item, i) => (
+          {workshop.agenda.map((item) => (
             <div class="relative flex gap-4 md:gap-6">
-              <!-- Time badge -->
-              <div class="relative z-10 flex h-[6.5rem] w-[6.5rem] shrink-0 flex-col items-center justify-center rounded-lg bg-eos-teal text-center text-white shadow-sm">
+              <div class="relative z-10 flex h-[6.5rem] w-[6.5rem] shrink-0 flex-col items-center justify-center rounded-lg bg-gradient-to-br from-eos-orange to-eos-orange-light text-center text-white shadow-sm">
                 <span class="text-xs font-medium uppercase tracking-wide opacity-80">
                   {item.time.includes("PM") ? "PM" : "AM"}
                 </span>
@@ -29,9 +27,8 @@ import workshop from "../data/workshop.json";
                 </span>
               </div>
 
-              <!-- Content -->
               <div class="flex flex-col justify-center py-1">
-                <h3 class="text-lg font-bold text-eos-navy">{item.topic}</h3>
+                <h3 class="text-lg font-bold text-eos-dark">{item.topic}</h3>
                 <p class="mt-1 text-gray-600">{item.description}</p>
               </div>
             </div>
