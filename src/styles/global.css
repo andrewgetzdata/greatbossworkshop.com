@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-eos-teal: #0077B6;
-  --color-eos-teal-dark: #005A8C;
-  --color-eos-teal-light: #33A1DE;
-  --color-eos-navy: #1B365D;
-  --color-eos-navy-light: #264573;
+  /* EOS Official Brand Colors */
+  --color-eos-orange: #FF7900;
+  --color-eos-orange-light: #FF9933;
+  --color-eos-dark: #152233;
+  --color-eos-dark-light: #1E3044;
+
+  /* Supporting palette */
   --color-eos-gray: #4A5568;
   --color-eos-light: #F7FAFC;
   --color-eos-gold: #D4A843;
-  --font-sans: "Inter", system-ui, sans-serif;
+
+  --font-sans: "Roboto", system-ui, sans-serif;
 }

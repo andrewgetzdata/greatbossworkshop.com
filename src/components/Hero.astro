@@ -2,21 +2,21 @@
 import workshop from "../data/workshop.json";
 ---
 
-<section id="hero" class="relative overflow-hidden bg-gradient-to-br from-eos-navy to-eos-teal-dark py-20 text-white md:py-32">
+<section id="hero" class="relative overflow-hidden bg-gradient-to-br from-eos-dark to-eos-dark-light py-20 text-white md:py-32">
   <div class="absolute inset-0 opacity-10">
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent_70%)]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,121,0,0.2),transparent_70%)]"></div>
   </div>
 
   <div class="relative mx-auto max-w-4xl px-4 text-center">
-    <p class="mb-4 text-sm font-semibold uppercase tracking-widest text-eos-teal-light">
+    <p class="mb-4 text-sm font-semibold uppercase tracking-widest text-eos-orange">
       An EOS Worldwide Workshop
     </p>
 
-    <h1 class="text-4xl font-extrabold leading-tight md:text-6xl">
+    <h1 class="text-4xl font-black leading-tight md:text-6xl">
       Become the Boss Everyone<br class="hidden md:inline" /> Wants to Work For
     </h1>
 
-    <p class="mx-auto mt-6 max-w-2xl text-lg text-gray-200 md:text-xl">
+    <p class="mx-auto mt-6 max-w-2xl text-lg text-gray-300 md:text-xl">
       Work alongside an EOS Implementer® and other leaders to master the
       leadership and management practices that build accountable, high-performing teams.
     </p>
@@ -26,37 +26,37 @@ import workshop from "../data/workshop.json";
         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
       <span>{workshop.dateDisplay}</span>
-      <span class="text-gray-400">|</span>
+      <span class="text-gray-500">|</span>
       <span>{workshop.location.city}, {workshop.location.state}</span>
     </div>
 
     <div class="mt-8">
       <a
         href="#pricing"
-        class="inline-block rounded-lg bg-eos-gold px-8 py-4 text-lg font-bold text-eos-navy shadow-lg transition hover:bg-yellow-500 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-eos-gold focus:ring-offset-2 focus:ring-offset-eos-navy"
+        class="inline-block rounded-lg bg-eos-orange px-8 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-eos-orange-light hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-eos-orange focus:ring-offset-2 focus:ring-offset-eos-dark"
         data-cta="hero"
       >
         Reserve Your Seat
       </a>
     </div>
 
-    <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-300">
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
       <span class="flex items-center gap-1.5">
-        <svg class="h-4 w-4 text-eos-gold" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="h-4 w-4 text-eos-orange" fill="currentColor" viewBox="0 0 20 20">
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
         {workshop.instructor.sessions} Sessions Led
       </span>
-      <span class="hidden text-gray-500 md:inline">|</span>
+      <span class="hidden text-gray-600 md:inline">|</span>
       <span class="flex items-center gap-1.5">
-        <svg class="h-4 w-4 text-eos-gold" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="h-4 w-4 text-eos-orange" fill="currentColor" viewBox="0 0 20 20">
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
         {workshop.instructor.yearsExperience} Years Experience
       </span>
-      <span class="hidden text-gray-500 md:inline">|</span>
+      <span class="hidden text-gray-600 md:inline">|</span>
       <span class="flex items-center gap-1.5">
-        <svg class="h-4 w-4 text-eos-gold" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="h-4 w-4 text-eos-orange" fill="currentColor" viewBox="0 0 20 20">
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
         Full Toolkit Included
