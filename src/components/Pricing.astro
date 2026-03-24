@@ -29,71 +29,52 @@ const inclusions = [
       </div>
     </div>
 
-    <div class="mt-12 grid gap-6 md:grid-cols-2">
-      <!-- ACH Card -->
-      <div class="relative overflow-hidden rounded-2xl border-2 border-eos-orange bg-white p-8 text-gray-900 shadow-xl">
-        <div class="absolute right-0 top-0 rounded-bl-lg bg-eos-orange px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-          Recommended
-        </div>
+    <!-- What's Included -->
+    <div class="mx-auto mt-12 max-w-xl rounded-2xl bg-white p-8 text-gray-900 shadow-xl">
+      <h3 class="text-center text-lg font-bold text-eos-dark">What's Included</h3>
+      <ul class="mt-5 space-y-3">
+        {inclusions.map((item) => (
+          <li class="flex items-start gap-2">
+            <svg class="mt-0.5 h-5 w-5 shrink-0 text-eos-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span class="text-gray-700">{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
 
-        <p class="text-sm font-semibold uppercase tracking-wide text-eos-orange">Bank Transfer (ACH)</p>
-        <p id="price-ach" class="mt-2 text-4xl font-black text-eos-dark">--</p>
-        <p class="mt-1 text-sm text-gray-500">No processing fee</p>
+    <!-- Payment Method -->
+    <div class="mt-8">
+      <h3 class="mb-4 text-center text-sm font-semibold uppercase tracking-wide text-gray-400">
+        Choose Payment Method
+      </h3>
+      <div class="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+        <button
+          data-checkout="ach"
+          disabled
+          class="group relative w-full overflow-hidden rounded-xl bg-eos-orange px-8 py-5 text-center text-white shadow-lg transition hover:bg-eos-orange-light hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[260px]"
+        >
+          <span class="block text-sm font-medium uppercase tracking-wide opacity-80">Bank Transfer (ACH)</span>
+          <span id="price-ach" class="mt-1 block text-3xl font-black">--</span>
+          <span class="mt-1 block text-xs opacity-70">No processing fee</span>
+          <span class="absolute right-0 top-0 rounded-bl-lg bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">Best price</span>
+        </button>
 
-        <ul class="mt-6 space-y-3">
-          {inclusions.map((item) => (
-            <li class="flex items-start gap-2">
-              <svg class="mt-0.5 h-5 w-5 shrink-0 text-eos-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              <span class="text-gray-700">{item}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <!-- Card -->
-      <div class="rounded-2xl border border-gray-200 bg-white p-8 text-gray-900 shadow-xl">
-        <p class="text-sm font-semibold uppercase tracking-wide text-eos-orange">Credit / Debit Card</p>
-        <p id="price-card" class="mt-2 text-4xl font-black text-eos-dark">--</p>
-        <p class="mt-1 text-sm text-gray-500">Includes 3% processing fee</p>
-
-        <ul class="mt-6 space-y-3">
-          {inclusions.map((item) => (
-            <li class="flex items-start gap-2">
-              <svg class="mt-0.5 h-5 w-5 shrink-0 text-eos-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              <span class="text-gray-700">{item}</span>
-            </li>
-          ))}
-        </ul>
+        <button
+          data-checkout="card"
+          disabled
+          class="w-full rounded-xl border-2 border-white/30 bg-white/5 px-8 py-5 text-center text-white shadow-lg transition hover:border-white/60 hover:bg-white/10 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[260px]"
+        >
+          <span class="block text-sm font-medium uppercase tracking-wide opacity-80">Credit / Debit Card</span>
+          <span id="price-card" class="mt-1 block text-3xl font-black">--</span>
+          <span class="mt-1 block text-xs opacity-70">Includes 3% processing fee</span>
+        </button>
       </div>
     </div>
 
-    <!-- Stripe Checkout Buttons -->
-    <div class="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-      <button
-        data-checkout="ach"
-        disabled
-        class="w-full rounded-lg bg-eos-orange px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-eos-orange-light hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-        style="min-height:44px; max-width:320px;"
-      >
-        Pay by Bank Transfer
-      </button>
-
-      <button
-        data-checkout="card"
-        disabled
-        class="w-full rounded-lg border-2 border-white bg-transparent px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-white/10 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-        style="min-height:44px; max-width:320px;"
-      >
-        Pay by Card
-      </button>
-    </div>
-
-    <p id="select-date-hint" class="mt-3 text-center text-sm text-eos-orange">
-      &uarr; Select a workshop date above to continue
+    <p id="select-date-hint" class="mt-4 text-center text-sm text-eos-orange">
+      &uarr; Select a workshop date and payment method to continue
     </p>
 
     <p class="mt-4 text-center text-sm text-gray-500">
