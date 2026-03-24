@@ -75,6 +75,7 @@ Each workshop date is a **separate Stripe Product** with specific metadata.
 | `session_date` | `2026-04-15` | Required — ISO date, used for sorting and auto-hiding past dates |
 | `session_display` | `Tuesday, April 15, 2026` | Required — human-readable date shown on the site |
 | `max_seats` | `25` | Required — capacity limit for this session |
+| `location` | `Columbus, OH` | Optional — shown on session cards and hero. Defaults to `Columbus, OH`. Can be a city, venue name, or `Online` |
 | `time` | `9:00 AM – 4:00 PM ET` | Optional — defaults to `9:00 AM – 4:00 PM ET` |
 
 ### Add Prices to the Product
@@ -102,6 +103,7 @@ stripe products create \
   -d "metadata[session_date]=2026-04-15" \
   -d "metadata[session_display]=Tuesday, April 15, 2026" \
   -d "metadata[max_seats]=25" \
+  -d "metadata[location]=Columbus, OH" \
   -d "metadata[time]=9:00 AM – 4:00 PM ET"
 
 # Note the product ID (prod_xxx), then create prices:

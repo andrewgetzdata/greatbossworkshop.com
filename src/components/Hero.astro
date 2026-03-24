@@ -21,13 +21,11 @@ import workshop from "../data/workshop.json";
       leadership and management practices that build accountable, high-performing teams.
     </p>
 
-    <div class="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
+    <div id="hero-badge" class="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
-      <span id="hero-dates">Multiple dates available</span>
-      <span class="text-gray-500">|</span>
-      <span>{workshop.location.city}, {workshop.location.state}</span>
+      <span id="hero-dates">Loading next workshop...</span>
     </div>
 
     <div class="mt-8">
@@ -71,4 +69,22 @@ import workshop from "../data/workshop.json";
       if (window.posthog) window.posthog.capture('cta_clicked', { source: 'hero' });
     });
   });
+
+  // Fetch next available session for hero badge
+  fetch('/api/list-sessions')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var next = data.sessions && data.sessions.find(function(s) { return s.status === 'on_sale'; });
+      var el = document.getElementById('hero-dates');
+      if (next && el) {
+        var locationText = next.location || '';
+        el.textContent = 'Next workshop: ' + next.dateDisplay + (locationText ? ' \u00B7 ' + locationText : '');
+      } else if (el) {
+        el.textContent = 'New dates coming soon';
+      }
+    })
+    .catch(function() {
+      var el = document.getElementById('hero-dates');
+      if (el) el.textContent = 'New dates coming soon';
+    });
 </script>

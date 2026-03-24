@@ -14,6 +14,7 @@ export async function handler(event: { httpMethod: string }) {
       date: s.date,
       dateDisplay: s.dateDisplay,
       time: s.time,
+      location: s.location,
       remaining: s.remaining,
       soldOut: s.soldOut,
       status: s.status,

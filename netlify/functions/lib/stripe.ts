@@ -7,6 +7,7 @@ export interface WorkshopSession {
   date: string;
   dateDisplay: string;
   time: string;
+  location: string;
   maxSeats: number;
   sold: number;
   remaining: number;
@@ -39,6 +40,7 @@ export async function getWorkshopSessions(): Promise<WorkshopSession[]> {
 
     const dateDisplay = product.metadata.session_display || sessionDate;
     const time = product.metadata.time || "9:00 AM – 4:00 PM ET";
+    const location = product.metadata.location || "Columbus, OH";
     const maxSeats = parseInt(product.metadata.max_seats || "25", 10);
 
     // Get prices for this product
@@ -71,6 +73,7 @@ export async function getWorkshopSessions(): Promise<WorkshopSession[]> {
       date: sessionDate,
       dateDisplay,
       time,
+      location,
       maxSeats,
       sold,
       remaining,

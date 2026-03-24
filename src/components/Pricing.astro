@@ -149,7 +149,7 @@ const inclusions = [
           btn.setAttribute('data-product', session.productId);
           btn.className = 'session-card w-full rounded-xl border-2 border-gray-600 bg-white/5 px-5 py-4 text-left transition hover:border-eos-orange hover:bg-white/10 sm:w-auto sm:min-w-[220px]';
           btn.innerHTML = '<p class="text-lg font-bold text-white">' + session.dateDisplay + '</p>'
-            + '<p class="mt-1 text-sm text-gray-400">' + session.time + '</p>'
+            + '<p class="mt-1 text-sm text-gray-400">' + session.time + ' \u00B7 ' + (session.location || '') + '</p>'
             + '<p class="session-spots mt-1 text-xs" style="color:' + (session.remaining <= 5 ? '#f97316' : '#6b7280') + ';">'
             + (session.remaining <= 5 ? session.remaining + ' spots left' : 'Spots available') + '</p>';
 
@@ -163,7 +163,7 @@ const inclusions = [
           var div = document.createElement('div');
           div.className = 'w-full rounded-xl border-2 border-gray-700 bg-white/5 px-5 py-4 text-left opacity-50 sm:w-auto sm:min-w-[220px]';
           div.innerHTML = '<p class="text-lg font-bold text-gray-400">' + session.dateDisplay + '</p>'
-            + '<p class="mt-1 text-sm text-gray-500">' + session.time + '</p>'
+            + '<p class="mt-1 text-sm text-gray-500">' + session.time + ' \u00B7 ' + (session.location || '') + '</p>'
             + '<p class="mt-1 text-xs text-red-400">Sold out</p>';
           container.appendChild(div);
         }
