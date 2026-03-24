@@ -110,20 +110,16 @@ const inclusions = [
       return;
     }
 
-    // Update prices from first available session
+    // Update price displays only (don't overwrite button HTML)
     var firstAvailable = sessions.find(function(s) { return s.status === 'on_sale'; });
     if (firstAvailable) {
       if (firstAvailable.priceAchAmount) {
         var achEl = document.getElementById('price-ach');
-        var achBtn = document.querySelector('[data-checkout="ach"]');
         if (achEl) achEl.textContent = formatPrice(firstAvailable.priceAchAmount * 100);
-        if (achBtn) achBtn.textContent = 'Pay ' + formatPrice(firstAvailable.priceAchAmount * 100) + ' by Bank Transfer';
       }
       if (firstAvailable.priceCardAmount) {
         var cardEl = document.getElementById('price-card');
-        var cardBtn = document.querySelector('[data-checkout="card"]');
         if (cardEl) cardEl.textContent = formatPrice(firstAvailable.priceCardAmount * 100);
-        if (cardBtn) cardBtn.textContent = 'Pay ' + formatPrice(firstAvailable.priceCardAmount * 100) + ' by Card';
       }
     }
 
