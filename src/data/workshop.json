@@ -1,8 +1,6 @@
 {
   "title": "Great Boss Workshop",
   "tagline": "Develop accountable, high-performing teams",
-  "date": "TBD",
-  "dateDisplay": "Next Workshop Date Coming Soon",
   "time": "9:00 AM – 4:00 PM ET",
   "duration": "7 hours",
   "location": {
@@ -19,7 +17,6 @@
     "cardPrice": 979,
     "currency": "USD"
   },
-  "maxAttendees": 25,
   "instructor": {
     "name": "Roy Getz",
     "title": "Expert EOS Implementer",

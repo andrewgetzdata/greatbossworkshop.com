@@ -24,7 +24,7 @@ import workshop from "../data/workshop.json";
         <dl class="mt-4 space-y-3 text-gray-700">
           <div class="flex gap-3">
             <dt class="font-medium text-gray-500">Date</dt>
-            <dd>{workshop.dateDisplay}</dd>
+            <dd id="session-date">Check your confirmation email for details</dd>
           </div>
           <div class="flex gap-3">
             <dt class="font-medium text-gray-500">Time</dt>
@@ -51,7 +51,7 @@ import workshop from "../data/workshop.json";
         <ul class="mt-4 space-y-3">
           <li class="flex items-start gap-3">
             <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-eos-orange text-xs font-bold text-white">1</span>
-            <span class="text-gray-700"><strong>Check your email</strong> for a confirmation receipt from Stripe.</span>
+            <span class="text-gray-700"><strong>Check your email</strong> for a confirmation with your workshop details.</span>
           </li>
           <li class="flex items-start gap-3">
             <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-eos-orange text-xs font-bold text-white">2</span>
@@ -72,10 +72,29 @@ import workshop from "../data/workshop.json";
 </Layout>
 
 <script is:inline>
+  var params = new URLSearchParams(window.location.search);
+  var productId = params.get('product');
+
+  // Fetch session info to show the date
+  if (productId) {
+    fetch('/api/list-sessions')
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        var match = data.sessions && data.sessions.find(function(s) {
+          return s.productId === productId;
+        });
+        if (match) {
+          var dateEl = document.getElementById('session-date');
+          if (dateEl) dateEl.textContent = match.dateDisplay;
+        }
+      })
+      .catch(function() {});
+  }
+
   if (window.posthog) {
-    var params = new URLSearchParams(window.location.search);
     window.posthog.capture('payment_completed', {
-      session_id: params.get('session_id')
+      session_id: params.get('session_id'),
+      product_id: productId,
     });
   }
 </script>

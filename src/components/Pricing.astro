@@ -1,18 +1,6 @@
 ---
 import workshop from "../data/workshop.json";
 
-const baseFormatted = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: workshop.pricing.currency,
-  minimumFractionDigits: 0,
-}).format(workshop.pricing.basePrice);
-
-const cardFormatted = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: workshop.pricing.currency,
-  minimumFractionDigits: 0,
-}).format(workshop.pricing.cardPrice);
-
 const inclusions = [
   "Full-day workshop (7 hours)",
   "Great Boss Toolkit",
@@ -27,8 +15,18 @@ const inclusions = [
     <div class="text-center">
       <h2 class="text-3xl font-bold md:text-4xl">Invest in Your Leadership</h2>
       <p class="mx-auto mt-3 max-w-xl text-lg text-gray-400">
-        Choose your preferred payment method. Save by paying with a bank transfer.
+        Choose your workshop date and preferred payment method.
       </p>
+    </div>
+
+    <!-- Date Selector (populated by JS) -->
+    <div class="mt-10">
+      <h3 class="mb-4 text-center text-sm font-semibold uppercase tracking-wide text-gray-400">
+        Select a Workshop Date
+      </h3>
+      <div id="session-list" class="flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+        <p id="sessions-loading" class="text-sm text-gray-500">Loading available dates...</p>
+      </div>
     </div>
 
     <div class="mt-12 grid gap-6 md:grid-cols-2">
@@ -39,7 +37,7 @@ const inclusions = [
         </div>
 
         <p class="text-sm font-semibold uppercase tracking-wide text-eos-orange">Bank Transfer (ACH)</p>
-        <p class="mt-2 text-4xl font-black text-eos-dark">{baseFormatted}</p>
+        <p id="price-ach" class="mt-2 text-4xl font-black text-eos-dark">--</p>
         <p class="mt-1 text-sm text-gray-500">No processing fee</p>
 
         <ul class="mt-6 space-y-3">
@@ -57,8 +55,8 @@ const inclusions = [
       <!-- Card -->
       <div class="rounded-2xl border border-gray-200 bg-white p-8 text-gray-900 shadow-xl">
         <p class="text-sm font-semibold uppercase tracking-wide text-eos-orange">Credit / Debit Card</p>
-        <p class="mt-2 text-4xl font-black text-eos-dark">{cardFormatted}</p>
-        <p class="mt-1 text-sm text-gray-500">Includes {workshop.pricing.cardSurchargePercent}% processing fee</p>
+        <p id="price-card" class="mt-2 text-4xl font-black text-eos-dark">--</p>
+        <p class="mt-1 text-sm text-gray-500">Includes processing fee</p>
 
         <ul class="mt-6 space-y-3">
           {inclusions.map((item) => (
@@ -77,47 +75,166 @@ const inclusions = [
     <div class="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
       <button
         data-checkout="ach"
-        class="w-full rounded-lg bg-eos-orange px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-eos-orange-light hover:shadow-xl sm:w-auto"
+        disabled
+        class="w-full rounded-lg bg-eos-orange px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-eos-orange-light hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         style="min-height:44px; max-width:320px;"
       >
-        Pay {baseFormatted} by Bank Transfer
+        Pay by Bank Transfer
       </button>
 
       <button
         data-checkout="card"
-        class="w-full rounded-lg border-2 border-white bg-transparent px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-white/10 hover:shadow-xl sm:w-auto"
+        disabled
+        class="w-full rounded-lg border-2 border-white bg-transparent px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-white/10 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         style="min-height:44px; max-width:320px;"
       >
-        Pay {cardFormatted} by Card
+        Pay by Card
       </button>
     </div>
 
-    <p class="mt-6 text-center text-sm text-gray-500">
+    <p id="select-date-hint" class="mt-3 text-center text-sm text-eos-orange">
+      &uarr; Select a workshop date above to continue
+    </p>
+
+    <p class="mt-4 text-center text-sm text-gray-500">
       Secure payment powered by Stripe. Full refund available 14+ days before the workshop.
     </p>
   </div>
 </section>
 
 <script is:inline>
+  var selectedProductId = null;
+
+  function formatPrice(cents) {
+    return '$' + (cents / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  // Fetch sessions from Stripe via our API
+  (async function() {
+    var container = document.getElementById('session-list');
+    var loading = document.getElementById('sessions-loading');
+
+    try {
+      var res = await fetch('/api/list-sessions');
+      if (!res.ok) throw new Error('Failed to load sessions');
+      var data = await res.json();
+
+      if (loading) loading.remove();
+
+      if (!data.sessions || data.sessions.length === 0) {
+        container.innerHTML = '<p class="text-gray-400">No upcoming workshops scheduled. Check back soon!</p>';
+        return;
+      }
+
+      // Update prices from first available session
+      var firstAvailable = data.sessions.find(function(s) { return s.status === 'on_sale'; });
+      if (firstAvailable) {
+        if (firstAvailable.priceAchAmount) {
+          var achEl = document.getElementById('price-ach');
+          var achBtn = document.querySelector('[data-checkout="ach"]');
+          if (achEl) achEl.textContent = formatPrice(firstAvailable.priceAchAmount * 100);
+          if (achBtn) achBtn.textContent = 'Pay ' + formatPrice(firstAvailable.priceAchAmount * 100) + ' by Bank Transfer';
+        }
+        if (firstAvailable.priceCardAmount) {
+          var cardEl = document.getElementById('price-card');
+          var cardBtn = document.querySelector('[data-checkout="card"]');
+          if (cardEl) cardEl.textContent = formatPrice(firstAvailable.priceCardAmount * 100);
+          if (cardBtn) cardBtn.textContent = 'Pay ' + formatPrice(firstAvailable.priceCardAmount * 100) + ' by Card';
+        }
+      }
+
+      data.sessions.forEach(function(session) {
+        if (session.status === 'on_sale') {
+          var btn = document.createElement('button');
+          btn.setAttribute('data-product', session.productId);
+          btn.className = 'session-card w-full rounded-xl border-2 border-gray-600 bg-white/5 px-5 py-4 text-left transition hover:border-eos-orange hover:bg-white/10 sm:w-auto sm:min-w-[220px]';
+          btn.innerHTML = '<p class="text-lg font-bold text-white">' + session.dateDisplay + '</p>'
+            + '<p class="mt-1 text-sm text-gray-400">' + session.time + '</p>'
+            + '<p class="session-spots mt-1 text-xs" style="color:' + (session.remaining <= 5 ? '#f97316' : '#6b7280') + ';">'
+            + (session.remaining <= 5 ? session.remaining + ' spots left' : 'Spots available') + '</p>';
+
+          btn.addEventListener('click', function() {
+            selectSession(session.productId);
+          });
+
+          container.appendChild(btn);
+
+        } else if (session.status === 'sold_out') {
+          var div = document.createElement('div');
+          div.className = 'w-full rounded-xl border-2 border-gray-700 bg-white/5 px-5 py-4 text-left opacity-50 sm:w-auto sm:min-w-[220px]';
+          div.innerHTML = '<p class="text-lg font-bold text-gray-400">' + session.dateDisplay + '</p>'
+            + '<p class="mt-1 text-sm text-gray-500">' + session.time + '</p>'
+            + '<p class="mt-1 text-xs text-red-400">Sold out</p>';
+          container.appendChild(div);
+        }
+      });
+
+    } catch (e) {
+      if (loading) loading.textContent = 'Unable to load sessions. Please refresh the page.';
+    }
+  })();
+
+  function selectSession(productId) {
+    selectedProductId = productId;
+
+    // Update card styles
+    document.querySelectorAll('[data-product]').forEach(function(c) {
+      c.style.borderColor = '#4b5563';
+      c.style.backgroundColor = 'rgba(255,255,255,0.05)';
+    });
+    var selected = document.querySelector('[data-product="' + productId + '"]');
+    if (selected) {
+      selected.style.borderColor = '#f97316';
+      selected.style.backgroundColor = 'rgba(255,255,255,0.15)';
+    }
+
+    // Enable checkout buttons
+    document.querySelectorAll('[data-checkout]').forEach(function(btn) {
+      btn.disabled = false;
+    });
+
+    // Hide the hint
+    var hint = document.getElementById('select-date-hint');
+    if (hint) hint.style.display = 'none';
+  }
+
+  // Checkout click handler
   document.querySelectorAll('[data-checkout]').forEach(function(btn) {
     btn.addEventListener('click', async function() {
+      if (!selectedProductId) {
+        alert('Please select a workshop date first.');
+        return;
+      }
+
       var method = btn.getAttribute('data-checkout');
       var originalText = btn.textContent;
       btn.textContent = 'Redirecting...';
       btn.disabled = true;
 
       if (window.posthog) {
-        window.posthog.capture('checkout_started', { method: method });
+        window.posthog.capture('checkout_started', {
+          method: method,
+          product_id: selectedProductId,
+        });
       }
 
       try {
         var res = await fetch('/api/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentMethod: method }),
+          body: JSON.stringify({
+            paymentMethod: method,
+            productId: selectedProductId,
+          }),
         });
-        if (!res.ok) throw new Error('Failed');
         var data = await res.json();
+
+        if (res.status === 409) {
+          btn.textContent = 'Sold Out';
+          alert('Sorry, this session is sold out! Please select a different date.');
+          return;
+        }
+        if (!res.ok) throw new Error(data.error || 'Failed');
         window.location.href = data.url;
       } catch (e) {
         btn.textContent = originalText;

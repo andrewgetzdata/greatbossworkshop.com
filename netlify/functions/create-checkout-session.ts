@@ -1,6 +1,4 @@
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { stripe, getWorkshopSessions } from "./lib/stripe.js";
 
 export async function handler(event: { httpMethod: string; body: string | null }) {
   if (event.httpMethod !== "POST") {
@@ -8,7 +6,7 @@ export async function handler(event: { httpMethod: string; body: string | null }
   }
 
   try {
-    const { paymentMethod } = JSON.parse(event.body || "{}");
+    const { paymentMethod, productId } = JSON.parse(event.body || "{}");
 
     if (paymentMethod !== "ach" && paymentMethod !== "card") {
       return {
@@ -17,26 +15,53 @@ export async function handler(event: { httpMethod: string; body: string | null }
       };
     }
 
-    const siteUrl = process.env.PUBLIC_SITE_URL || "https://greatbossworkshop.com";
-    const priceId =
-      paymentMethod === "ach"
-        ? process.env.STRIPE_PRICE_ID_ACH
-        : process.env.STRIPE_PRICE_ID_CARD;
-
-    if (!priceId) {
+    if (!productId) {
       return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Payment configuration error" }),
+        statusCode: 400,
+        body: JSON.stringify({ error: "Product ID is required" }),
       };
     }
 
-    const session = await stripe.checkout.sessions.create({
+    // Fetch sessions and find the matching one
+    const sessions = await getWorkshopSessions();
+    const session = sessions.find((s) => s.productId === productId);
+
+    if (!session || session.status === "past") {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Invalid or unavailable session" }),
+      };
+    }
+
+    if (session.soldOut) {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({ error: "sold_out", remaining: 0 }),
+      };
+    }
+
+    const priceId = paymentMethod === "ach" ? session.priceAch : session.priceCard;
+    if (!priceId) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "No price configured for this payment method" }),
+      };
+    }
+
+    const siteUrl = process.env.PUBLIC_SITE_URL || "https://greatbossworkshop.com";
+
+    const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: paymentMethod === "ach" ? ["us_bank_account"] : ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${siteUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${siteUrl}/success?session_id={CHECKOUT_SESSION_ID}&product=${productId}`,
       cancel_url: `${siteUrl}/#pricing`,
       customer_creation: "always",
+      metadata: {
+        workshop_product: productId,
+        workshop_session_date: session.date,
+        workshop_session_display: session.dateDisplay,
+      },
       ...(paymentMethod === "ach" && {
         payment_method_options: {
           us_bank_account: {
@@ -52,7 +77,7 @@ export async function handler(event: { httpMethod: string; body: string | null }
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: session.url }),
+      body: JSON.stringify({ url: checkoutSession.url }),
     };
   } catch (err) {
     console.error("Stripe session creation failed:", err);
