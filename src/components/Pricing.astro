@@ -25,7 +25,7 @@ const inclusions = [
       <h3 class="mb-4 text-center text-sm font-semibold uppercase tracking-wide text-gray-400">
         Select a Workshop Date
       </h3>
-      <div id="session-list" class="flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+      <div id="session-list" class="mx-auto grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
         <p id="sessions-loading" class="text-sm text-gray-500">Loading available dates...</p>
       </div>
     </div>
@@ -128,7 +128,7 @@ const inclusions = [
       if (session.status === 'on_sale') {
         var btn = document.createElement('button');
         btn.setAttribute('data-product', session.productId);
-        btn.className = 'session-card w-full rounded-xl border-2 border-gray-600 bg-white/5 px-5 py-4 text-left transition hover:border-eos-orange hover:bg-white/10 sm:w-auto sm:min-w-[220px]';
+        btn.className = 'session-card w-full rounded-xl border-2 border-gray-600 bg-white/5 px-4 py-3 text-left transition hover:border-eos-orange hover:bg-white/10';
         btn.innerHTML = '<p class="text-lg font-bold text-white">' + session.dateDisplay + '</p>'
           + '<p class="mt-1 text-sm text-gray-400">' + (session.location || '') + '</p>'
           + '<p class="session-spots mt-1 text-xs" style="color:' + spotsColor(session) + ';">'
@@ -145,7 +145,7 @@ const inclusions = [
 
       } else if (session.status === 'sold_out') {
         var div = document.createElement('div');
-        div.className = 'w-full rounded-xl border-2 border-gray-700 bg-white/5 px-5 py-4 text-left opacity-50 sm:w-auto sm:min-w-[220px]';
+        div.className = 'w-full rounded-xl border-2 border-gray-700 bg-white/5 px-4 py-3 text-left opacity-50';
         div.innerHTML = '<p class="text-lg font-bold text-gray-400">' + session.dateDisplay + '</p>'
           + '<p class="mt-1 text-sm text-gray-500">' + (session.location || '') + '</p>'
           + '<p class="mt-1 text-xs text-red-400">Sold out</p>';
