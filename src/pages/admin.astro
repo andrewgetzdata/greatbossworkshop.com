@@ -8,121 +8,60 @@ import workshop from "../data/workshop.json";
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Admin | {workshop.title}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #111827; color: #1a1a1a; min-height: 100vh; }
-
-    /* Login */
-    #login-form { max-width: 360px; margin: 120px auto; text-align: center; padding: 0 16px; }
-    #login-form h1 { margin-bottom: 16px; color: white; }
-    #login-form .subtitle { color: #9ca3af; margin-bottom: 24px; }
-    #login-form input { width: 100%; padding: 12px; border: 1px solid #374151; border-radius: 8px; font-size: 16px; margin-bottom: 12px; background: #1f2937; color: white; }
-    #login-form input::placeholder { color: #6b7280; }
-    #login-form button { width: 100%; padding: 12px; background: #f97316; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
-    #login-form button:hover { background: #ea580c; }
-    #login-error { color: #ef4444; font-size: 14px; margin-top: 8px; display: none; }
-
-    /* Layout */
-    #dashboard { display: none; height: 100vh; }
-    .layout { display: flex; height: 100%; }
-
-    /* Sidebar */
-    .sidebar { width: 340px; min-width: 340px; background: #1f2937; border-right: 1px solid #374151; overflow-y: auto; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 20px; border-bottom: 1px solid #374151; }
-    .sidebar-header h1 { font-size: 18px; color: white; }
-    .sidebar-header p { font-size: 13px; color: #6b7280; margin-top: 4px; }
-    .sidebar-list { flex: 1; overflow-y: auto; padding: 12px; }
-    .sidebar-footer { padding: 12px 20px; border-top: 1px solid #374151; }
-    .logout-btn { background: none; border: none; color: #6b7280; font-size: 13px; cursor: pointer; padding: 4px 0; }
-    .logout-btn:hover { color: #9ca3af; }
-
-    /* Session cards in sidebar */
-    .session-card { padding: 14px; border-radius: 10px; border: 2px solid #374151; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; background: rgba(255,255,255,0.02); }
-    .session-card:hover { border-color: #f97316; background: rgba(255,255,255,0.05); }
-    .session-card.active { border-color: #f97316; background: rgba(249,115,22,0.1); }
-    .session-card .date { font-size: 15px; font-weight: 700; color: white; }
-    .session-card .meta { font-size: 12px; color: #9ca3af; margin-top: 4px; }
-    .session-card .meta-row { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-    .session-card .stats { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-    .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
-    .badge-green { background: rgba(34,197,94,0.15); color: #4ade80; }
-    .badge-red { background: rgba(239,68,68,0.15); color: #f87171; }
-    .seats-text { font-size: 12px; color: #6b7280; }
-
-    /* Main content */
-    .main { flex: 1; overflow-y: auto; background: #f9fafb; }
-    .main-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #9ca3af; font-size: 15px; }
-    .main-content { padding: 28px 32px; }
-    .main-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-    .main-title { font-size: 20px; font-weight: 700; }
-    .main-subtitle { font-size: 13px; color: #6b7280; margin-top: 4px; }
-
-    /* Table */
-    table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    th { text-align: left; padding: 10px 14px; color: #6b7280; font-weight: 500; border-bottom: 1px solid #e5e7eb; font-size: 12px; text-transform: uppercase; background: #fafafa; }
-    td { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f9fafb; }
-    .status-paid { color: #166534; font-weight: 500; }
-    .status-refunded { color: #991b1b; }
-    .status-canceled { color: #6b7280; }
-    .empty-state { text-align: center; color: #9ca3af; padding: 48px 0; font-size: 14px; }
-    .loading-state { text-align: center; color: #6b7280; padding: 48px 0; font-size: 14px; }
-
-    .export-btn { background: white; border: 1px solid #d1d5db; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; color: #374151; font-weight: 500; }
-    .export-btn:hover { background: #f3f4f6; }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      .layout { flex-direction: column; }
-      .sidebar { width: 100%; min-width: 100%; max-height: 45vh; }
-      .main { min-height: 55vh; }
-    }
-  </style>
 </head>
-<body>
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f3f4f6;color:#1a1a1a;min-height:100vh;">
+
   <!-- Login -->
-  <div id="login-form">
-    <h1>Workshop Admin</h1>
-    <p class="subtitle">Enter your admin password</p>
-    <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
-    <button onclick="login()">Sign In</button>
-    <p id="login-error">Invalid password. Please try again.</p>
+  <div id="login-form" style="max-width:360px;margin:120px auto;text-align:center;padding:0 16px;">
+    <h1 style="margin-bottom:16px;font-size:24px;">Workshop Admin</h1>
+    <p style="color:#6b7280;margin-bottom:24px;">Enter your admin password</p>
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password"
+      style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:16px;margin-bottom:12px;" />
+    <button onclick="login()"
+      style="width:100%;padding:12px;background:#f97316;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;">
+      Sign In
+    </button>
+    <p id="login-error" style="color:#dc2626;font-size:14px;margin-top:8px;display:none;">Invalid password. Please try again.</p>
   </div>
 
   <!-- Dashboard -->
-  <div id="dashboard">
-    <div class="layout">
-      <!-- Sidebar: Session list -->
-      <div class="sidebar">
-        <div class="sidebar-header">
-          <h1>Workshop Sessions</h1>
-          <p>Select a session to view attendees</p>
+  <div id="dashboard" style="display:none;height:100vh;">
+    <div style="display:flex;height:100%;">
+
+      <!-- Sidebar -->
+      <div style="width:360px;min-width:360px;background:white;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="padding:20px;border-bottom:1px solid #e5e7eb;">
+          <h1 style="font-size:18px;margin:0;">Workshop Sessions</h1>
+          <p style="font-size:13px;color:#6b7280;margin-top:4px;">Select a session to view attendees</p>
         </div>
-        <div class="sidebar-list" id="session-list">
-          <p class="loading-state">Loading sessions...</p>
+        <div id="session-list" style="flex:1;overflow-y:auto;padding:12px;">
+          <p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">Loading sessions...</p>
         </div>
-        <div class="sidebar-footer">
-          <button class="logout-btn" onclick="logout()">Sign out</button>
+        <div style="padding:12px 20px;border-top:1px solid #e5e7eb;">
+          <button onclick="logout()" style="background:none;border:none;color:#6b7280;font-size:13px;cursor:pointer;padding:4px 0;">Sign out</button>
         </div>
       </div>
 
-      <!-- Main: Attendee list -->
-      <div class="main">
-        <div class="main-empty" id="main-empty">
+      <!-- Main -->
+      <div style="flex:1;overflow-y:auto;background:#f9fafb;">
+        <div id="main-empty" style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:15px;">
           <p>Select a session to view its attendees</p>
         </div>
-        <div class="main-content" id="main-content" style="display:none;">
-          <div class="main-header">
+        <div id="main-content" style="display:none;padding:28px 32px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
             <div>
-              <div class="main-title" id="main-title"></div>
-              <div class="main-subtitle" id="main-subtitle"></div>
+              <div id="main-title" style="font-size:20px;font-weight:700;"></div>
+              <div id="main-subtitle" style="font-size:13px;color:#6b7280;margin-top:4px;"></div>
             </div>
-            <button class="export-btn" id="export-btn" onclick="exportCSV()">Export CSV</button>
+            <button id="export-btn" onclick="exportCSV()"
+              style="background:white;border:1px solid #d1d5db;padding:6px 16px;border-radius:8px;cursor:pointer;font-size:13px;color:#374151;font-weight:500;">
+              Export CSV
+            </button>
           </div>
           <div id="attendee-table"></div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -176,24 +115,37 @@ import workshop from "../data/workshop.json";
         sessionsData = data.sessions || [];
 
         if (sessionsData.length === 0) {
-          list.innerHTML = '<p class="empty-state">No upcoming sessions.</p>';
+          list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">No upcoming sessions.</p>';
           return;
         }
 
         list.innerHTML = '';
         sessionsData.forEach(function(s) {
           var card = document.createElement('div');
-          card.className = 'session-card';
           card.setAttribute('data-product', s.productId);
+          card.style.cssText = 'padding:14px;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:8px;cursor:pointer;background:white;transition:all 0.15s;';
 
-          var badgeClass = s.remaining === 0 ? 'badge-red' : 'badge-green';
+          card.onmouseenter = function() {
+            if (!card.classList.contains('active')) {
+              card.style.borderColor = '#f97316';
+              card.style.background = '#fff7ed';
+            }
+          };
+          card.onmouseleave = function() {
+            if (!card.classList.contains('active')) {
+              card.style.borderColor = '#e5e7eb';
+              card.style.background = 'white';
+            }
+          };
+
+          var badgeColor = s.remaining === 0 ? 'background:#fee2e2;color:#991b1b;' : 'background:#dcfce7;color:#166534;';
           var badgeText = s.remaining === 0 ? 'Sold Out' : s.remaining + ' left';
 
-          card.innerHTML = '<div class="date">' + s.dateDisplay + '</div>'
-            + '<div class="meta">' + (s.location || '') + '</div>'
-            + '<div class="stats">'
-            + '<span class="seats-text">' + s.sold + ' / ' + s.maxSeats + ' seats</span>'
-            + '<span class="badge ' + badgeClass + '">' + badgeText + '</span>'
+          card.innerHTML = '<div style="font-size:15px;font-weight:700;color:#1a1a1a;">' + s.dateDisplay + '</div>'
+            + '<div style="font-size:12px;color:#6b7280;margin-top:4px;">' + (s.location || '') + '</div>'
+            + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">'
+            + '<span style="font-size:12px;color:#6b7280;">' + s.sold + ' / ' + s.maxSeats + ' seats</span>'
+            + '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600;' + badgeColor + '">' + badgeText + '</span>'
             + '</div>';
 
           card.addEventListener('click', function() {
@@ -202,26 +154,31 @@ import workshop from "../data/workshop.json";
           list.appendChild(card);
         });
       } catch (e) {
-        list.innerHTML = '<p class="empty-state">Failed to load sessions.</p>';
+        list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">Failed to load sessions.</p>';
       }
     }
 
     async function selectSession(productId) {
       currentProductId = productId;
 
-      // Update active card
-      document.querySelectorAll('.session-card').forEach(function(c) {
+      // Update active card styling
+      document.querySelectorAll('[data-product]').forEach(function(c) {
         c.classList.remove('active');
+        c.style.borderColor = '#e5e7eb';
+        c.style.background = 'white';
       });
       var active = document.querySelector('[data-product="' + productId + '"]');
-      if (active) active.classList.add('active');
+      if (active) {
+        active.classList.add('active');
+        active.style.borderColor = '#f97316';
+        active.style.background = '#fff7ed';
+      }
 
       // Show main content
       document.getElementById('main-empty').style.display = 'none';
       var content = document.getElementById('main-content');
       content.style.display = 'block';
 
-      // Find session info
       var session = sessionsData.find(function(s) { return s.productId === productId; });
       document.getElementById('main-title').textContent = session ? session.dateDisplay : 'Session';
       document.getElementById('main-subtitle').textContent = session
@@ -229,7 +186,7 @@ import workshop from "../data/workshop.json";
         : '';
 
       var tableEl = document.getElementById('attendee-table');
-      tableEl.innerHTML = '<p class="loading-state">Loading attendees...</p>';
+      tableEl.innerHTML = '<p style="text-align:center;color:#6b7280;padding:48px 0;font-size:14px;">Loading attendees...</p>';
 
       try {
         var res = await fetch('/api/attendees?key=' + encodeURIComponent(adminKey) + '&product=' + productId);
@@ -238,32 +195,40 @@ import workshop from "../data/workshop.json";
         currentAttendees = data.attendees || [];
 
         if (currentAttendees.length === 0) {
-          tableEl.innerHTML = '<p class="empty-state">No attendees yet for this session.</p>';
+          tableEl.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:48px 0;font-size:14px;font-style:italic;">No attendees yet for this session.</p>';
           document.getElementById('export-btn').style.display = 'none';
           return;
         }
 
         document.getElementById('export-btn').style.display = 'inline-block';
 
-        var html = '<table><thead><tr>'
-          + '<th>Name</th><th>Email</th><th>Amount</th><th>Method</th><th>Purchase Date</th><th>Status</th>'
+        var html = '<table style="width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">'
+          + '<thead><tr>'
+          + '<th style="text-align:left;padding:10px 14px;color:#6b7280;font-weight:500;border-bottom:1px solid #e5e7eb;font-size:12px;text-transform:uppercase;background:#fafafa;">Name</th>'
+          + '<th style="text-align:left;padding:10px 14px;color:#6b7280;font-weight:500;border-bottom:1px solid #e5e7eb;font-size:12px;text-transform:uppercase;background:#fafafa;">Email</th>'
+          + '<th style="text-align:left;padding:10px 14px;color:#6b7280;font-weight:500;border-bottom:1px solid #e5e7eb;font-size:12px;text-transform:uppercase;background:#fafafa;">Amount</th>'
+          + '<th style="text-align:left;padding:10px 14px;color:#6b7280;font-weight:500;border-bottom:1px solid #e5e7eb;font-size:12px;text-transform:uppercase;background:#fafafa;">Method</th>'
+          + '<th style="text-align:left;padding:10px 14px;color:#6b7280;font-weight:500;border-bottom:1px solid #e5e7eb;font-size:12px;text-transform:uppercase;background:#fafafa;">Date</th>'
+          + '<th style="text-align:left;padding:10px 14px;color:#6b7280;font-weight:500;border-bottom:1px solid #e5e7eb;font-size:12px;text-transform:uppercase;background:#fafafa;">Status</th>'
           + '</tr></thead><tbody>';
 
         currentAttendees.forEach(function(a) {
+          var statusColor = a.status === 'paid' ? '#166534' : a.status === 'refunded' ? '#991b1b' : '#6b7280';
+          var statusWeight = a.status === 'paid' ? 'font-weight:500;' : '';
           html += '<tr>'
-            + '<td>' + (a.name || '\u2014') + '</td>'
-            + '<td>' + (a.email || '\u2014') + '</td>'
-            + '<td>' + a.amount + '</td>'
-            + '<td>' + a.paymentMethod + '</td>'
-            + '<td>' + a.date + '</td>'
-            + '<td class="status-' + a.status + '">' + a.status + '</td>'
+            + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (a.name || '\u2014') + '</td>'
+            + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (a.email || '\u2014') + '</td>'
+            + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + a.amount + '</td>'
+            + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + a.paymentMethod + '</td>'
+            + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + a.date + '</td>'
+            + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;color:' + statusColor + ';' + statusWeight + '">' + a.status + '</td>'
             + '</tr>';
         });
 
         html += '</tbody></table>';
         tableEl.innerHTML = html;
       } catch (e) {
-        tableEl.innerHTML = '<p class="empty-state">Failed to load attendees.</p>';
+        tableEl.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:48px 0;font-size:14px;">Failed to load attendees.</p>';
       }
     }
 
