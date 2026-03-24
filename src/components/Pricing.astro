@@ -151,7 +151,7 @@ const inclusions = [
           btn.innerHTML = '<p class="text-lg font-bold text-white">' + session.dateDisplay + '</p>'
             + '<p class="mt-1 text-sm text-gray-400">' + (session.location || '') + '</p>'
             + '<p class="session-spots mt-1 text-xs" style="color:' + (session.remaining <= 5 ? '#f97316' : '#6b7280') + ';">'
-            + (session.remaining <= 5 ? session.remaining + ' spots left' : 'Spots available') + '</p>';
+            + (session.remaining <= 5 ? 'Only ' + session.remaining + ' of ' + session.maxSeats + ' spots left' : session.remaining + ' of ' + session.maxSeats + ' spots available') + '</p>';
 
           btn.addEventListener('click', function() {
             selectSession(session.productId);
