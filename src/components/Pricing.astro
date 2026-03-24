@@ -109,67 +109,122 @@ const inclusions = [
     return '$' + (cents / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   }
 
-  // Fetch sessions from Stripe via our API
-  (async function() {
+  function spotsText(session) {
+    if (session.remaining <= 5) return 'Only ' + session.remaining + ' of ' + session.maxSeats + ' spots left';
+    return session.remaining + ' of ' + session.maxSeats + ' spots available';
+  }
+
+  function spotsColor(session) {
+    return session.remaining <= 5 ? '#f97316' : '#6b7280';
+  }
+
+  function renderSessions(sessions) {
     var container = document.getElementById('session-list');
     var loading = document.getElementById('sessions-loading');
+    if (loading) loading.remove();
 
-    try {
-      var res = await fetch('/api/list-sessions');
-      if (!res.ok) throw new Error('Failed to load sessions');
-      var data = await res.json();
+    if (!sessions || sessions.length === 0) {
+      container.innerHTML = '<p class="text-gray-400">No upcoming workshops scheduled. Check back soon!</p>';
+      return;
+    }
 
-      if (loading) loading.remove();
+    // Update prices from first available session
+    var firstAvailable = sessions.find(function(s) { return s.status === 'on_sale'; });
+    if (firstAvailable) {
+      if (firstAvailable.priceAchAmount) {
+        var achEl = document.getElementById('price-ach');
+        var achBtn = document.querySelector('[data-checkout="ach"]');
+        if (achEl) achEl.textContent = formatPrice(firstAvailable.priceAchAmount * 100);
+        if (achBtn) achBtn.textContent = 'Pay ' + formatPrice(firstAvailable.priceAchAmount * 100) + ' by Bank Transfer';
+      }
+      if (firstAvailable.priceCardAmount) {
+        var cardEl = document.getElementById('price-card');
+        var cardBtn = document.querySelector('[data-checkout="card"]');
+        if (cardEl) cardEl.textContent = formatPrice(firstAvailable.priceCardAmount * 100);
+        if (cardBtn) cardBtn.textContent = 'Pay ' + formatPrice(firstAvailable.priceCardAmount * 100) + ' by Card';
+      }
+    }
 
-      if (!data.sessions || data.sessions.length === 0) {
-        container.innerHTML = '<p class="text-gray-400">No upcoming workshops scheduled. Check back soon!</p>';
+    container.innerHTML = '';
+    sessions.forEach(function(session) {
+      if (session.status === 'on_sale') {
+        var btn = document.createElement('button');
+        btn.setAttribute('data-product', session.productId);
+        btn.className = 'session-card w-full rounded-xl border-2 border-gray-600 bg-white/5 px-5 py-4 text-left transition hover:border-eos-orange hover:bg-white/10 sm:w-auto sm:min-w-[220px]';
+        btn.innerHTML = '<p class="text-lg font-bold text-white">' + session.dateDisplay + '</p>'
+          + '<p class="mt-1 text-sm text-gray-400">' + (session.location || '') + '</p>'
+          + '<p class="session-spots mt-1 text-xs" style="color:' + spotsColor(session) + ';">'
+          + spotsText(session) + '</p>';
+
+        btn.addEventListener('click', function() { selectSession(session.productId); });
+        container.appendChild(btn);
+
+        // Restore selection if this was the selected card
+        if (session.productId === selectedProductId) {
+          btn.style.borderColor = '#f97316';
+          btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
+        }
+
+      } else if (session.status === 'sold_out') {
+        var div = document.createElement('div');
+        div.className = 'w-full rounded-xl border-2 border-gray-700 bg-white/5 px-5 py-4 text-left opacity-50 sm:w-auto sm:min-w-[220px]';
+        div.innerHTML = '<p class="text-lg font-bold text-gray-400">' + session.dateDisplay + '</p>'
+          + '<p class="mt-1 text-sm text-gray-500">' + (session.location || '') + '</p>'
+          + '<p class="mt-1 text-xs text-red-400">Sold out</p>';
+        container.appendChild(div);
+
+        // If this was the selected session and it just sold out, disable checkout
+        if (session.productId === selectedProductId) {
+          selectedProductId = null;
+          document.querySelectorAll('[data-checkout]').forEach(function(btn) { btn.disabled = true; });
+          var hint = document.getElementById('select-date-hint');
+          if (hint) { hint.style.display = 'block'; hint.textContent = 'This session just sold out. Please select another date.'; }
+        }
+      }
+    });
+  }
+
+  function updateSpotsOnly(sessions) {
+    if (!sessions) return;
+    sessions.forEach(function(session) {
+      var card = document.querySelector('[data-product="' + session.productId + '"]');
+      if (!card) return;
+
+      // If it just sold out, re-render everything
+      if (session.status === 'sold_out') {
+        renderSessions(sessions);
         return;
       }
 
-      // Update prices from first available session
-      var firstAvailable = data.sessions.find(function(s) { return s.status === 'on_sale'; });
-      if (firstAvailable) {
-        if (firstAvailable.priceAchAmount) {
-          var achEl = document.getElementById('price-ach');
-          var achBtn = document.querySelector('[data-checkout="ach"]');
-          if (achEl) achEl.textContent = formatPrice(firstAvailable.priceAchAmount * 100);
-          if (achBtn) achBtn.textContent = 'Pay ' + formatPrice(firstAvailable.priceAchAmount * 100) + ' by Bank Transfer';
-        }
-        if (firstAvailable.priceCardAmount) {
-          var cardEl = document.getElementById('price-card');
-          var cardBtn = document.querySelector('[data-checkout="card"]');
-          if (cardEl) cardEl.textContent = formatPrice(firstAvailable.priceCardAmount * 100);
-          if (cardBtn) cardBtn.textContent = 'Pay ' + formatPrice(firstAvailable.priceCardAmount * 100) + ' by Card';
-        }
+      // Otherwise just update the spots text
+      var spotsEl = card.querySelector('.session-spots');
+      if (spotsEl) {
+        spotsEl.textContent = spotsText(session);
+        spotsEl.style.color = spotsColor(session);
       }
+    });
+  }
 
-      data.sessions.forEach(function(session) {
-        if (session.status === 'on_sale') {
-          var btn = document.createElement('button');
-          btn.setAttribute('data-product', session.productId);
-          btn.className = 'session-card w-full rounded-xl border-2 border-gray-600 bg-white/5 px-5 py-4 text-left transition hover:border-eos-orange hover:bg-white/10 sm:w-auto sm:min-w-[220px]';
-          btn.innerHTML = '<p class="text-lg font-bold text-white">' + session.dateDisplay + '</p>'
-            + '<p class="mt-1 text-sm text-gray-400">' + (session.location || '') + '</p>'
-            + '<p class="session-spots mt-1 text-xs" style="color:' + (session.remaining <= 5 ? '#f97316' : '#6b7280') + ';">'
-            + (session.remaining <= 5 ? 'Only ' + session.remaining + ' of ' + session.maxSeats + ' spots left' : session.remaining + ' of ' + session.maxSeats + ' spots available') + '</p>';
+  // 1. Load cached data instantly
+  // 2. Then fetch fresh data in background to update spots
+  (async function() {
+    try {
+      // Fast load from cache
+      var res = await fetch('/api/list-sessions');
+      if (!res.ok) throw new Error('Failed');
+      var data = await res.json();
+      renderSessions(data.sessions);
 
-          btn.addEventListener('click', function() {
-            selectSession(session.productId);
-          });
-
-          container.appendChild(btn);
-
-        } else if (session.status === 'sold_out') {
-          var div = document.createElement('div');
-          div.className = 'w-full rounded-xl border-2 border-gray-700 bg-white/5 px-5 py-4 text-left opacity-50 sm:w-auto sm:min-w-[220px]';
-          div.innerHTML = '<p class="text-lg font-bold text-gray-400">' + session.dateDisplay + '</p>'
-            + '<p class="mt-1 text-sm text-gray-500">' + (session.location || '') + '</p>'
-            + '<p class="mt-1 text-xs text-red-400">Sold out</p>';
-          container.appendChild(div);
-        }
-      });
+      // Background refresh with fresh data
+      fetch('/api/list-sessions?fresh=1')
+        .then(function(r) { return r.json(); })
+        .then(function(freshData) {
+          if (freshData.sessions) updateSpotsOnly(freshData.sessions);
+        })
+        .catch(function() {});
 
     } catch (e) {
+      var loading = document.getElementById('sessions-loading');
       if (loading) loading.textContent = 'Unable to load sessions. Please refresh the page.';
     }
   })();

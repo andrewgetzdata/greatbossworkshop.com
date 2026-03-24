@@ -3,7 +3,7 @@ import { getWorkshopSessions, type WorkshopSession } from "./lib/stripe.js";
 // In-memory cache (persists across warm invocations on Netlify)
 let cachedResponse: string | null = null;
 let cacheTimestamp = 0;
-const CACHE_TTL_MS = 60_000; // 1 minute
+const CACHE_TTL_MS = 3_600_000; // 1 hour
 
 function toPublicSession(s: WorkshopSession) {
   return {
@@ -26,16 +26,20 @@ function toPublicSession(s: WorkshopSession) {
   };
 }
 
-export async function handler(event: { httpMethod: string }) {
+export async function handler(event: {
+  httpMethod: string;
+  queryStringParameters: Record<string, string | undefined> | null;
+}) {
   if (event.httpMethod !== "GET") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
   }
 
+  const forceFresh = event.queryStringParameters?.fresh === "1";
   const now = Date.now();
   const cacheAge = now - cacheTimestamp;
 
-  // Serve from cache if fresh
-  if (cachedResponse && cacheAge < CACHE_TTL_MS) {
+  // Serve from cache if fresh (unless ?fresh=1 is requested)
+  if (!forceFresh && cachedResponse && cacheAge < CACHE_TTL_MS) {
     return {
       statusCode: 200,
       headers: {
