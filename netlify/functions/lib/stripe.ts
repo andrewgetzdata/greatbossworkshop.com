@@ -8,6 +8,11 @@ export interface WorkshopSession {
   dateDisplay: string;
   time: string;
   location: string;
+  venue: string;
+  address: string;
+  mapsUrl: string;
+  webinarUrl: string;
+  isOnline: boolean;
   maxSeats: number;
   sold: number;
   remaining: number;
@@ -41,6 +46,11 @@ export async function getWorkshopSessions(): Promise<WorkshopSession[]> {
     const dateDisplay = product.metadata.session_display || sessionDate;
     const time = product.metadata.time || "9:00 AM – 4:00 PM ET";
     const location = product.metadata.location || "Columbus, OH";
+    const venue = product.metadata.venue || "";
+    const address = product.metadata.address || "";
+    const mapsUrl = product.metadata.maps_url || "";
+    const webinarUrl = product.metadata.webinar_url || "";
+    const isOnline = location.toLowerCase() === "online" || !!webinarUrl;
     const maxSeats = parseInt(product.metadata.max_seats || "25", 10);
 
     // Get prices for this product
@@ -74,6 +84,11 @@ export async function getWorkshopSessions(): Promise<WorkshopSession[]> {
       dateDisplay,
       time,
       location,
+      venue,
+      address,
+      mapsUrl,
+      webinarUrl,
+      isOnline,
       maxSeats,
       sold,
       remaining,

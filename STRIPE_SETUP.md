@@ -75,7 +75,11 @@ Each workshop date is a **separate Stripe Product** with specific metadata.
 | `session_date` | `2026-04-15` | Required — ISO date, used for sorting and auto-hiding past dates |
 | `session_display` | `Tuesday, April 15, 2026` | Required — human-readable date shown on the site |
 | `max_seats` | `25` | Required — capacity limit for this session |
-| `location` | `Columbus, OH` | Optional — shown on session cards and hero. Defaults to `Columbus, OH`. Can be a city, venue name, or `Online` |
+| `location` | `Columbus, OH` | Optional — short label for session cards/hero. Defaults to `Columbus, OH`. Use `Online` for virtual sessions |
+| `venue` | `EOS Worldwide Columbus` | Optional — venue name for confirmation email and success page |
+| `address` | `1103 Schrock Court, Suite 402, Columbus, OH 43229` | Optional — full address for in-person sessions |
+| `maps_url` | `https://maps.google.com/?q=...` | Optional — Google Maps link for in-person sessions |
+| `webinar_url` | `https://zoom.us/j/...` | Optional — join link for online sessions |
 | `time` | `9:00 AM – 4:00 PM ET` | Optional — defaults to `9:00 AM – 4:00 PM ET` |
 
 ### Add Prices to the Product

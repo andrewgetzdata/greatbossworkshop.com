@@ -61,6 +61,11 @@ export async function handler(event: { httpMethod: string; body: string | null }
         workshop_product: productId,
         workshop_session_date: session.date,
         workshop_session_display: session.dateDisplay,
+        workshop_location: session.location,
+        workshop_venue: session.venue,
+        workshop_address: session.address,
+        workshop_maps_url: session.mapsUrl,
+        workshop_webinar_url: session.webinarUrl,
       },
       ...(paymentMethod === "ach" && {
         payment_method_options: {

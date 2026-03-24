@@ -9,6 +9,11 @@ export async function sendConfirmationEmail(session: {
   amount_total: number | null;
   payment_method_types?: string[];
   sessionDateDisplay?: string;
+  location?: string;
+  venue?: string;
+  address?: string;
+  mapsUrl?: string;
+  webinarUrl?: string;
 }) {
   const email = session.customer_details?.email || session.customer_email;
   if (!email) {
@@ -22,8 +27,23 @@ export async function sendConfirmationEmail(session: {
     : "See your Stripe receipt";
 
   const dateDisplay = session.sessionDateDisplay || "See your confirmation for details";
+  const isOnline = session.location?.toLowerCase() === "online" || !!session.webinarUrl;
 
-  const locationLine = `${workshop.location.name}, ${workshop.location.address}, ${workshop.location.city}, ${workshop.location.state} ${workshop.location.zip}`;
+  // Build location HTML based on in-person vs online
+  let locationHtml: string;
+  if (isOnline && session.webinarUrl) {
+    locationHtml = `<a href="${session.webinarUrl}" style="color:#f97316;text-decoration:none;">Online — Join link will be sent before the workshop</a>`;
+  } else if (isOnline) {
+    locationHtml = "Online — Join link will be sent before the workshop";
+  } else {
+    const parts = [session.venue, session.address].filter(Boolean).join(", ");
+    const locationText = parts || session.location || "See your confirmation for details";
+    if (session.mapsUrl) {
+      locationHtml = `<a href="${session.mapsUrl}" style="color:#f97316;text-decoration:none;">${locationText}</a>`;
+    } else {
+      locationHtml = locationText;
+    }
+  }
 
   await resend.emails.send({
     from: process.env.EMAIL_FROM || "Great Boss Workshop <workshop@greatbossworkshop.com>",
@@ -59,9 +79,7 @@ export async function sendConfirmationEmail(session: {
         </tr>
         <tr>
           <td style="padding:8px 12px 8px 0;color:#6b7280;font-weight:500;vertical-align:top;">Location</td>
-          <td style="padding:8px 0;">
-            <a href="${workshop.location.mapsUrl}" style="color:#f97316;text-decoration:none;">${locationLine}</a>
-          </td>
+          <td style="padding:8px 0;">${locationHtml}</td>
         </tr>
         <tr>
           <td style="padding:8px 12px 8px 0;color:#6b7280;font-weight:500;vertical-align:top;">Instructor</td>
@@ -77,8 +95,11 @@ export async function sendConfirmationEmail(session: {
     <h2 style="margin:28px 0 12px;font-size:18px;">What's Next</h2>
     <ol style="margin:0;padding:0 0 0 20px;font-size:15px;line-height:1.8;">
       <li style="margin-bottom:8px;"><strong>Check your email</strong> for a payment receipt from Stripe.</li>
-      <li style="margin-bottom:8px;"><strong>Calendar invite</strong> — you'll receive one with all the details shortly.</li>
-      <li><strong>Come ready to learn</strong> — bring an open mind. All materials, workbooks, and lunch are provided.</li>
+      <li style="margin-bottom:8px;">${isOnline
+        ? "<strong>Join link</strong> — you'll receive the webinar link before the workshop."
+        : "<strong>Calendar invite</strong> — you'll receive one with all the details shortly."
+      }</li>
+      <li><strong>Come ready to learn</strong> — bring an open mind.${isOnline ? "" : " All materials, workbooks, and lunch are provided."}</li>
     </ol>
 
     <div style="margin:32px 0 0;padding-top:20px;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:13px;text-align:center;">

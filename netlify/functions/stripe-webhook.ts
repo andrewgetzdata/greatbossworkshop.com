@@ -48,6 +48,11 @@ export async function handler(event: {
         amount_total: session.amount_total,
         payment_method_types: session.payment_method_types,
         sessionDateDisplay: session.metadata?.workshop_session_display,
+        location: session.metadata?.workshop_location,
+        venue: session.metadata?.workshop_venue,
+        address: session.metadata?.workshop_address,
+        mapsUrl: session.metadata?.workshop_maps_url,
+        webinarUrl: session.metadata?.workshop_webinar_url,
       });
       break;
     }

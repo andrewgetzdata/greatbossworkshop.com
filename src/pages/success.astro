@@ -28,15 +28,11 @@ import workshop from "../data/workshop.json";
           </div>
           <div class="flex gap-3">
             <dt class="font-medium text-gray-500">Time</dt>
-            <dd>{workshop.time}</dd>
+            <dd id="session-time">{workshop.time}</dd>
           </div>
           <div class="flex gap-3">
             <dt class="font-medium text-gray-500">Location</dt>
-            <dd>
-              <a href={workshop.location.mapsUrl} target="_blank" rel="noopener noreferrer" class="text-eos-orange hover:underline">
-                {workshop.location.address}, {workshop.location.city}, {workshop.location.state} {workshop.location.zip}
-              </a>
-            </dd>
+            <dd id="session-location">Check your confirmation email for details</dd>
           </div>
           <div class="flex gap-3">
             <dt class="font-medium text-gray-500">Instructor</dt>
@@ -75,7 +71,7 @@ import workshop from "../data/workshop.json";
   var params = new URLSearchParams(window.location.search);
   var productId = params.get('product');
 
-  // Fetch session info to show the date
+  // Fetch session info to show date, time, and location
   if (productId) {
     fetch('/api/list-sessions')
       .then(function(res) { return res.json(); })
@@ -83,9 +79,31 @@ import workshop from "../data/workshop.json";
         var match = data.sessions && data.sessions.find(function(s) {
           return s.productId === productId;
         });
-        if (match) {
-          var dateEl = document.getElementById('session-date');
-          if (dateEl) dateEl.textContent = match.dateDisplay;
+        if (!match) return;
+
+        var dateEl = document.getElementById('session-date');
+        if (dateEl) dateEl.textContent = match.dateDisplay;
+
+        var timeEl = document.getElementById('session-time');
+        if (timeEl && match.time) timeEl.textContent = match.time;
+
+        var locEl = document.getElementById('session-location');
+        if (locEl) {
+          if (match.isOnline) {
+            if (match.webinarUrl) {
+              locEl.innerHTML = '<a href="' + match.webinarUrl + '" target="_blank" rel="noopener noreferrer" class="text-eos-orange hover:underline">Online — Join link</a>';
+            } else {
+              locEl.textContent = 'Online — Join link will be sent before the workshop';
+            }
+          } else {
+            var parts = [match.venue, match.address].filter(Boolean).join(', ');
+            var text = parts || match.location;
+            if (match.mapsUrl) {
+              locEl.innerHTML = '<a href="' + match.mapsUrl + '" target="_blank" rel="noopener noreferrer" class="text-eos-orange hover:underline">' + text + '</a>';
+            } else {
+              locEl.textContent = text;
+            }
+          }
         }
       })
       .catch(function() {});
