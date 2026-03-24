@@ -18,7 +18,7 @@ const jsonLd = {
   "@type": "EducationEvent",
   name: workshop.title,
   description: workshop.meta.description,
-  startDate: workshop.date !== "TBD" ? workshop.date : undefined,
+  startDate: undefined,
   location: {
     "@type": "Place",
     name: workshop.location.name,
