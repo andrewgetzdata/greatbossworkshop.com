@@ -32,7 +32,7 @@ const inclusions = [
 
     <!-- What's Included -->
     <div class="mx-auto mt-12 max-w-2xl rounded-2xl bg-white p-8 text-gray-900 shadow-xl">
-      <h3 class="text-center text-lg font-bold text-eos-dark">What's Included</h3>
+      <h3 class="text-center text-2xl font-bold text-eos-dark">What's Included</h3>
       <ul class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {inclusions.map((item) => (
           <li class="flex items-start gap-2">
@@ -50,26 +50,26 @@ const inclusions = [
       <h3 class="mb-4 text-center text-sm font-semibold uppercase tracking-wide text-gray-400">
         Choose Payment Method
       </h3>
-      <div class="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+      <div class="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
         <button
           data-checkout="ach"
           disabled
-          class="group relative w-full overflow-hidden rounded-xl border-2 border-eos-orange bg-eos-orange px-8 py-5 text-center text-white shadow-lg transition hover:bg-eos-orange-light hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[280px]"
+          class="group relative w-full overflow-hidden rounded-xl border-2 border-eos-orange bg-eos-orange px-8 py-7 text-center text-white shadow-lg transition hover:bg-eos-orange-light hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span class="absolute right-0 top-0 rounded-bl-lg bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wide">Recommended</span>
-          <span class="block text-sm font-bold uppercase tracking-wide">Bank Transfer (ACH)</span>
-          <span id="price-ach" class="mt-1 block text-3xl font-black">--</span>
-          <span class="mt-1 block text-sm font-semibold opacity-90">No processing fee</span>
+          <span class="mt-2 block text-sm font-bold uppercase tracking-wide">Bank Transfer (ACH)</span>
+          <span id="price-ach" class="mt-2 block text-4xl font-black">--</span>
+          <span class="mt-2 block text-sm font-semibold opacity-90">No processing fee</span>
         </button>
 
         <button
           data-checkout="card"
           disabled
-          class="w-full rounded-xl border-2 border-white/30 bg-white/5 px-8 py-5 text-center text-white shadow-lg transition hover:border-white/60 hover:bg-white/10 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[280px]"
+          class="w-full rounded-xl border-2 border-white/30 bg-white/5 px-8 py-7 text-center text-white shadow-lg transition hover:border-white/60 hover:bg-white/10 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span class="block text-sm font-bold uppercase tracking-wide">Credit / Debit Card</span>
-          <span id="price-card" class="mt-1 block text-3xl font-black">--</span>
-          <span class="mt-1 block text-sm font-semibold opacity-70">Includes 3% processing fee</span>
+          <span id="price-card" class="mt-2 block text-4xl font-black">--</span>
+          <span class="mt-2 block text-sm font-semibold opacity-70">Includes 3% processing fee</span>
         </button>
       </div>
     </div>
