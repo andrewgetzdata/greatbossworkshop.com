@@ -160,6 +160,21 @@ const inclusions = [
         }
       }
     });
+
+    // Fill remaining grid slots with "Coming soon" placeholders
+    var totalCards = container.children.length;
+    var remainder = totalCards % 3;
+    if (remainder !== 0) {
+      var fillCount = 3 - remainder;
+      for (var i = 0; i < fillCount; i++) {
+        var placeholder = document.createElement('div');
+        placeholder.className = 'w-full rounded-xl border-2 border-dashed border-gray-700 bg-white/5 px-4 py-3 text-left opacity-40';
+        placeholder.innerHTML = '<p class="text-lg font-bold text-gray-500">TBD</p>'
+          + '<p class="mt-1 text-sm text-gray-600">New date</p>'
+          + '<p class="mt-1 text-xs text-eos-orange">Coming soon</p>';
+        container.appendChild(placeholder);
+      }
+    }
   }
 
   function updateSpotsOnly(sessions) {
