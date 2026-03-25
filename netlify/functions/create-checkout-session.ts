@@ -1,4 +1,4 @@
-import { stripe, getWorkshopSessions } from "./lib/stripe.js";
+import { stripe, getTicketsSoldForProduct } from "./lib/stripe.js";
 
 export async function handler(event: { httpMethod: string; body: string | null }) {
   if (event.httpMethod !== "POST") {
@@ -22,31 +22,52 @@ export async function handler(event: { httpMethod: string; body: string | null }
       };
     }
 
-    // Fetch sessions and find the matching one
-    const sessions = await getWorkshopSessions();
-    const session = sessions.find((s) => s.productId === productId);
+    // Fetch only the single product instead of all sessions
+    const product = await stripe.products.retrieve(productId);
 
-    if (!session || session.status === "past") {
+    if (!product.active || product.metadata.workshop_type !== "great_boss") {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: "Invalid or unavailable session" }),
       };
     }
 
-    if (session.soldOut) {
+    const sessionDate = product.metadata.session_date;
+    const today = new Date().toISOString().split("T")[0];
+    if (!sessionDate || sessionDate < today) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Invalid or unavailable session" }),
+      };
+    }
+
+    const maxSeats = parseInt(product.metadata.max_seats || "25", 10);
+    const sold = await getTicketsSoldForProduct(productId);
+    const remaining = Math.max(0, maxSeats - sold);
+
+    if (remaining === 0) {
       return {
         statusCode: 409,
         body: JSON.stringify({ error: "sold_out", remaining: 0 }),
       };
     }
 
-    const priceId = paymentMethod === "ach" ? session.priceAch : session.priceCard;
+    // Get the right price for the payment method
+    const prices = await stripe.prices.list({ product: productId, active: true });
+    const priceId = prices.data.find((p) => p.metadata.payment_type === paymentMethod)?.id;
     if (!priceId) {
       return {
         statusCode: 500,
         body: JSON.stringify({ error: "No price configured for this payment method" }),
       };
     }
+
+    const dateDisplay = product.metadata.session_display || sessionDate;
+    const location = product.metadata.location || "Columbus, OH";
+    const venue = product.metadata.venue || "";
+    const address = product.metadata.address || "";
+    const mapsUrl = product.metadata.maps_url || "";
+    const webinarUrl = product.metadata.webinar_url || "";
 
     const siteUrl = process.env.PUBLIC_SITE_URL || "https://greatbossworkshop.com";
 
@@ -59,13 +80,13 @@ export async function handler(event: { httpMethod: string; body: string | null }
       customer_creation: "always",
       metadata: {
         workshop_product: productId,
-        workshop_session_date: session.date,
-        workshop_session_display: session.dateDisplay,
-        workshop_location: session.location,
-        workshop_venue: session.venue,
-        workshop_address: session.address,
-        workshop_maps_url: session.mapsUrl,
-        workshop_webinar_url: session.webinarUrl,
+        workshop_session_date: sessionDate,
+        workshop_session_display: dateDisplay,
+        workshop_location: location,
+        workshop_venue: venue,
+        workshop_address: address,
+        workshop_maps_url: mapsUrl,
+        workshop_webinar_url: webinarUrl,
       },
       ...(paymentMethod === "ach" && {
         payment_method_options: {

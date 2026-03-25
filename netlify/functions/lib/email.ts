@@ -148,6 +148,7 @@ export async function sendConfirmationEmail(session: {
 
   await resend.emails.send({
     from: process.env.EMAIL_FROM || "Great Boss Workshop <workshop@greatbossworkshop.com>",
+    reply_to: process.env.EMAIL_REPLY_TO || undefined,
     to: email,
     subject: `You're registered for the ${workshop.title} on ${dateDisplay}!`,
     attachments,

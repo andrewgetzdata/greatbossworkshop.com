@@ -7,7 +7,9 @@ import workshop from "../data/workshop.json";
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>Admin | {workshop.title}</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f3f4f6;color:#1a1a1a;min-height:100vh;">
 
@@ -30,9 +32,15 @@ import workshop from "../data/workshop.json";
 
       <!-- Sidebar -->
       <div style="width:360px;min-width:360px;background:white;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;overflow:hidden;">
-        <div style="padding:20px;border-bottom:1px solid #e5e7eb;">
-          <h1 style="font-size:18px;margin:0;">Workshop Sessions</h1>
-          <p style="font-size:13px;color:#6b7280;margin-top:4px;">Select a session to view attendees</p>
+        <div style="padding:20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h1 style="font-size:18px;margin:0;">Workshop Sessions</h1>
+            <p style="font-size:13px;color:#6b7280;margin-top:4px;">Select a session to view attendees</p>
+          </div>
+          <button id="report-btn" onclick="toggleReport()"
+            style="background:transparent;border:2px solid #f97316;color:#f97316;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+            Report
+          </button>
         </div>
         <div id="session-list" style="flex:1;overflow-y:auto;padding:12px;">
           <p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">Loading sessions...</p>
@@ -60,6 +68,8 @@ import workshop from "../data/workshop.json";
           </div>
           <div id="attendee-table"></div>
         </div>
+        <div id="report-content" style="display:none;padding:28px 32px;overflow-y:auto;height:100%;box-sizing:border-box;">
+        </div>
       </div>
 
     </div>
@@ -70,6 +80,13 @@ import workshop from "../data/workshop.json";
     var sessionsData = [];
     var currentAttendees = [];
     var currentProductId = null;
+    var reportMode = false;
+    var revenueChart = null;
+    var signupsChart = null;
+    var forecastChart = null;
+    var forecastBarChart = null;
+    var currentReportData = null;
+    var currentYear = new Date().getFullYear();
 
     if (adminKey) showDashboard();
 
@@ -80,10 +97,19 @@ import workshop from "../data/workshop.json";
     function login() {
       var pw = document.getElementById('password').value;
       if (!pw) return;
+      var btn = document.querySelector('#login-form button');
+      var originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      btn.style.opacity = '0.7';
+      document.getElementById('login-error').style.display = 'none';
       fetch('/api/attendees?key=' + encodeURIComponent(pw))
         .then(function(res) {
           if (res.status === 401) {
             document.getElementById('login-error').style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = originalText;
+            btn.style.opacity = '1';
             return;
           }
           sessionStorage.setItem('admin_key', pw);
@@ -92,6 +118,9 @@ import workshop from "../data/workshop.json";
         })
         .catch(function() {
           document.getElementById('login-error').style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = originalText;
+          btn.style.opacity = '1';
         });
     }
 
@@ -138,23 +167,451 @@ import workshop from "../data/workshop.json";
             }
           };
 
-          var badgeColor = s.remaining === 0 ? 'background:#fee2e2;color:#991b1b;' : 'background:#dcfce7;color:#166534;';
           var badgeText = s.remaining === 0 ? 'Sold Out' : s.remaining + ' left';
+          var leftBadgeColor = s.remaining === 0 ? 'background:#fee2e2;color:#991b1b;' : 'background:#dbeafe;color:#1e40af;';
 
-          card.innerHTML = '<div style="font-size:15px;font-weight:700;color:#1a1a1a;">' + s.dateDisplay + '</div>'
+          card.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">'
+            + '<span style="font-size:15px;font-weight:700;color:#1a1a1a;">' + s.dateDisplay + '</span>'
+            + '<div style="display:flex;gap:4px;align-items:center;">'
+            + '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:#f3f4f6;color:#6b7280;">' + (s.achCount || 0) + ' ACH | ' + (s.cardCount || 0) + ' CC</span>'
+            + '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:#dcfce7;color:#166534;">$' + (s.revenue || 0).toLocaleString() + '</span>'
+            + '</div>'
+            + '</div>'
             + '<div style="font-size:12px;color:#6b7280;margin-top:4px;">' + (s.location || '') + '</div>'
-            + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">'
-            + '<span style="font-size:12px;color:#6b7280;">' + s.sold + ' / ' + s.maxSeats + ' seats</span>'
-            + '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600;' + badgeColor + '">' + badgeText + '</span>'
+            + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">'
+            + '<span style="font-size:12px;color:#6b7280;">' + s.sold + ' / ' + s.maxSeats + ' seats' + (s.priceAchAmount ? ' · $' + s.priceAchAmount.toLocaleString() : '') + '</span>'
+            + '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:10px;font-weight:600;' + leftBadgeColor + '">' + badgeText + '</span>'
             + '</div>';
 
           card.addEventListener('click', function() {
+            reportMode = false;
+            document.getElementById('report-content').style.display = 'none';
+            setReportBtnStyle(false);
             selectSession(s.productId);
           });
           list.appendChild(card);
         });
       } catch (e) {
         list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">Failed to load sessions.</p>';
+      }
+    }
+
+    function setReportBtnStyle(active) {
+      var btn = document.getElementById('report-btn');
+      if (active) {
+        btn.style.background = '#f97316';
+        btn.style.color = 'white';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = '#f97316';
+      }
+    }
+
+    function toggleReport() {
+      reportMode = !reportMode;
+      if (reportMode) {
+        // Deselect any active session card
+        document.querySelectorAll('[data-product]').forEach(function(c) {
+          c.classList.remove('active');
+          c.style.borderColor = '#e5e7eb';
+          c.style.background = 'white';
+        });
+        currentProductId = null;
+        document.getElementById('main-empty').style.display = 'none';
+        document.getElementById('main-content').style.display = 'none';
+        document.getElementById('report-content').style.display = 'block';
+        setReportBtnStyle(true);
+        loadReport(currentYear);
+      } else {
+        document.getElementById('report-content').style.display = 'none';
+        document.getElementById('main-empty').style.display = 'flex';
+        setReportBtnStyle(false);
+      }
+    }
+
+    async function loadReport(year) {
+      currentYear = year;
+      var container = document.getElementById('report-content');
+      container.innerHTML = '<p style="text-align:center;color:#6b7280;padding:48px 0;font-size:14px;">Loading report...</p>';
+      try {
+        var res = await fetch('/api/report?key=' + encodeURIComponent(adminKey) + '&year=' + year);
+        if (res.status === 401) { logout(); return; }
+        var data = await res.json();
+        currentReportData = data;
+        renderReport(data);
+      } catch (e) {
+        container.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:48px 0;font-size:14px;">Failed to load report.</p>';
+      }
+    }
+
+    function renderReport(data) {
+      var container = document.getElementById('report-content');
+      var html = '';
+
+      // Year selector tabs
+      html += '<div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;">';
+      (data.availableYears || []).forEach(function(y) {
+        var isActive = y === currentYear;
+        var bgColor = isActive ? '#f97316' : '#f3f4f6';
+        var textColor = isActive ? 'white' : '#374151';
+        html += '<button onclick="loadReport(' + y + ')" style="padding:6px 16px;border-radius:999px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:' + bgColor + ';color:' + textColor + ';">' + y + '</button>';
+      });
+      html += '</div>';
+
+      var sessions = data.sessions || [];
+      if (sessions.length === 0) {
+        html += '<div style="display:flex;align-items:center;justify-content:center;height:300px;color:#9ca3af;font-size:15px;text-align:center;">'
+          + '<p>No session data for ' + currentYear + ' yet.<br>Sessions will appear here once workshop dates are created in Stripe.</p>'
+          + '</div>';
+        container.innerHTML = html;
+        return;
+      }
+
+      // Compute aggregates from per-session data
+      var totalRevenue = 0, achRevenue = 0, cardRevenue = 0, totalSold = 0, totalACH = 0, totalCard = 0, refundTotal = 0;
+      sessions.forEach(function(s) {
+        totalRevenue += s.revenue || 0;
+        achRevenue += s.achRevenue || 0;
+        cardRevenue += s.cardRevenue || 0;
+        totalSold += s.sold || 0;
+        totalACH += s.achCount || 0;
+        totalCard += s.cardCount || 0;
+        refundTotal += s.refundAmount || 0;
+      });
+      var refunds = data.refunds || [];
+      var refundCount = refunds.length;
+      var netRevenue = totalRevenue - refundTotal;
+
+      // Store aggregates on data for forecast use
+      data.totalRevenue = totalRevenue;
+      data.totalSold = totalSold;
+      data.totalACH = totalACH;
+      data.totalCard = totalCard;
+
+      // Section A: Revenue
+      html += '<div style="font-size:18px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:12px;margin-bottom:20px;">Session Revenue + Signups</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">';
+      html += metricCard('Total Revenue', '$' + totalRevenue.toLocaleString());
+      html += metricCard('Refunds', '-$' + refundTotal.toLocaleString(), '#991b1b');
+      html += metricCard('Net Revenue', '$' + netRevenue.toLocaleString());
+      html += '</div>';
+
+      // Revenue by Session + Signups per Session side by side
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;">';
+      html += '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+      html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">Revenue per Session</div>';
+      html += '<div style="height:280px;"><canvas id="revenueChart"></canvas></div>';
+      html += '</div>';
+      html += '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+      html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">Signups per Session</div>';
+      html += '<div style="height:280px;"><canvas id="signupsChart"></canvas></div>';
+      html += '</div>';
+      html += '</div>';
+
+      // Section C: Forecasted Revenue
+      html += '<div style="font-size:18px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:12px;margin-bottom:20px;">Forecasted Revenue</div>';
+      html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap;">';
+      html += '<div style="display:flex;align-items:center;gap:12px;">';
+      html += '<label style="font-size:14px;font-weight:500;">Expected Fill Rate</label>';
+      html += '<input type="number" id="fill-rate-input" value="90" min="0" max="100" style="width:64px;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;" oninput="updateForecast()" />';
+      html += '<span style="font-size:14px;color:#6b7280;">%</span>';
+      html += '</div>';
+      html += '<div style="flex:1;display:flex;gap:16px;">';
+      html += '<div style="flex:1;background:white;border-radius:12px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;align-items:center;gap:12px;">';
+      html += '<span style="font-size:12px;color:#6b7280;">Max Revenue</span>';
+      html += '<span id="forecast-max-value" style="font-size:24px;font-weight:700;color:#9ca3af;">--</span>';
+      html += '</div>';
+      html += '<div style="flex:1;background:white;border-radius:12px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;align-items:center;gap:12px;">';
+      html += '<span style="font-size:12px;color:#6b7280;">Projected Year Total</span>';
+      html += '<span id="forecast-projected-value" style="font-size:24px;font-weight:700;">--</span>';
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;">';
+      html += '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+      html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">Per-Session Breakdown</div>';
+      html += '<div style="height:300px;"><canvas id="forecastBarChart"></canvas></div>';
+      html += '</div>';
+      html += '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+      html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">Cumulative Annual Revenue</div>';
+      html += '<div style="height:300px;"><canvas id="forecastChart"></canvas></div>';
+      html += '</div>';
+      html += '</div>';
+
+      // Section D: Refunds
+      html += '<div style="font-size:18px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:12px;margin-bottom:20px;">Refunds</div>';
+      if (refundCount === 0) {
+        html += '<p style="color:#6b7280;font-size:14px;">No refunds recorded</p>';
+      } else {
+        html += '<p style="font-size:14px;color:#6b7280;margin-bottom:16px;">' + refundCount + ' refund' + (refundCount !== 1 ? 's' : '') + ' totaling $' + refundTotal.toLocaleString() + '</p>';
+        html += '<table style="width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+        html += '<thead><tr>';
+        ['Session', 'Attendee', 'Email', 'Amount', 'Date'].forEach(function(col) {
+          html += '<th style="text-align:left;padding:10px 14px;color:#6b7280;font-weight:500;border-bottom:1px solid #e5e7eb;font-size:12px;text-transform:uppercase;background:#fafafa;">' + col + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+        refunds.forEach(function(r) {
+          html += '<tr>';
+          html += '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (r.sessionDate || '\u2014') + '</td>';
+          html += '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (r.attendeeName || '\u2014') + '</td>';
+          html += '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (r.attendeeEmail || '\u2014') + '</td>';
+          html += '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">$' + (r.amount || 0).toLocaleString() + '</td>';
+          html += '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (r.refundDate || '\u2014') + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+      }
+
+      container.innerHTML = html;
+
+      // Render charts after DOM is updated
+      setTimeout(function() { renderCharts(data); }, 50);
+    }
+
+    function metricCard(label, value, valueColor) {
+      var color = valueColor || '#1a1a1a';
+      return '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">'
+        + '<div style="font-size:12px;color:#6b7280;margin-bottom:4px;">' + label + '</div>'
+        + '<div style="font-size:24px;font-weight:700;color:' + color + ';">' + value + '</div>'
+        + '</div>';
+    }
+
+    function shortDate(dateStr) {
+      // "2026-04-15" -> "04/15"
+      var parts = dateStr.split('-');
+      return parts[1] + '/' + parts[2];
+    }
+
+    function renderCharts(data) {
+      var sessions = data.sessions || [];
+      var labels = sessions.map(function(s) { return shortDate(s.date); });
+
+      // Revenue chart (stacked ACH + Card, vertical bar)
+      if (revenueChart) { revenueChart.destroy(); revenueChart = null; }
+      var revCtx = document.getElementById('revenueChart');
+      if (revCtx) {
+        revenueChart = new Chart(revCtx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'ACH',
+                data: sessions.map(function(s) { return s.achRevenue || 0; }),
+                backgroundColor: '#f97316',
+                borderRadius: 4
+              },
+              {
+                label: 'Card',
+                data: sessions.map(function(s) { return s.cardRevenue || 0; }),
+                backgroundColor: '#fbbf24',
+                borderRadius: 4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+              x: { stacked: true, grid: { display: false } },
+              y: { stacked: true, ticks: { callback: function(v) { return '$' + v.toLocaleString(); } } }
+            }
+          }
+        });
+      }
+
+      // Signups chart (vertical bar)
+      if (signupsChart) { signupsChart.destroy(); signupsChart = null; }
+      var sigCtx = document.getElementById('signupsChart');
+      if (sigCtx) {
+        signupsChart = new Chart(sigCtx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Signups',
+              data: sessions.map(function(s) { return s.sold || 0; }),
+              backgroundColor: '#3b82f6',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+          }
+        });
+      }
+
+      // Forecast chart
+      updateForecast();
+    }
+
+    function updateForecast() {
+      if (!currentReportData) return;
+      var data = currentReportData;
+      var sessions = data.sessions || [];
+      var totalRevenue = data.totalRevenue || 0;
+      var totalSold = data.totalSold || 0;
+      var fillInput = document.getElementById('fill-rate-input');
+      var fillRate = fillInput ? parseFloat(fillInput.value) || 0 : 90;
+      var labels = [];
+      // Per-session bars
+      var perMaxData = [];
+      var perExpectedData = [];
+      var perActualData = [];
+      // Cumulative lines
+      var cumMaxData = [];
+      var cumExpectedData = [];
+      var cumActualData = [];
+      var cumMax = 0, cumExpected = 0, cumActual = 0;
+
+      sessions.forEach(function(s) {
+        labels.push(shortDate(s.date));
+        var actual = s.revenue || 0;
+        var maxSeats = s.maxSeats || 25;
+        var basePrice = s.priceAchAmount || 950;
+        var maxRevenue = maxSeats * basePrice;
+        var expected;
+
+        if (s.isPast) {
+          expected = actual;
+        } else {
+          var remaining = s.remaining || 0;
+          var sold = s.sold || 0;
+          var expectedSeats = sold + Math.round(remaining * (fillRate / 100));
+          expected = expectedSeats * basePrice;
+        }
+
+        // Per-session values
+        perMaxData.push(maxRevenue);
+        perExpectedData.push(expected);
+        perActualData.push(actual);
+
+        // Cumulative values
+        cumMax += maxRevenue;
+        cumExpected += expected;
+        cumActual += actual;
+        cumMaxData.push(cumMax);
+        cumExpectedData.push(cumExpected);
+        cumActualData.push(cumActual);
+      });
+
+      // Update big numbers
+      var maxEl = document.getElementById('forecast-max-value');
+      if (maxEl) maxEl.textContent = '$' + cumMax.toLocaleString();
+      var projectedEl = document.getElementById('forecast-projected-value');
+      if (projectedEl) projectedEl.textContent = '$' + cumExpected.toLocaleString();
+
+      // Per-session grouped bar chart (left)
+      if (forecastBarChart) { forecastBarChart.destroy(); forecastBarChart = null; }
+      var barCtx = document.getElementById('forecastBarChart');
+      if (barCtx) {
+        // Use separate x-axes stacked on top of each other to overlay bars
+        forecastBarChart = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Max',
+                data: perMaxData,
+                backgroundColor: 'rgba(209,213,219,0.4)',
+                borderColor: '#d1d5db',
+                borderWidth: 1,
+                borderRadius: 4,
+                xAxisID: 'x',
+                barPercentage: 0.85,
+                order: 3
+              },
+              {
+                label: 'Expected',
+                data: perExpectedData,
+                backgroundColor: 'rgba(251,191,36,0.7)',
+                borderColor: '#fbbf24',
+                borderWidth: 1,
+                borderRadius: 4,
+                xAxisID: 'x2',
+                barPercentage: 0.6,
+                order: 2
+              },
+              {
+                label: 'Actual',
+                data: perActualData,
+                backgroundColor: '#f97316',
+                borderRadius: 4,
+                xAxisID: 'x3',
+                barPercentage: 0.35,
+                order: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+              x: { grid: { display: false } },
+              x2: { display: false, grid: { display: false } },
+              x3: { display: false, grid: { display: false } },
+              y: { ticks: { callback: function(v) { return '$' + v.toLocaleString(); } } }
+            }
+          }
+        });
+      }
+
+      // Cumulative line chart (right)
+      if (forecastChart) { forecastChart.destroy(); forecastChart = null; }
+      var fcCtx = document.getElementById('forecastChart');
+      if (fcCtx) {
+        forecastChart = new Chart(fcCtx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Max Revenue',
+                data: cumMaxData,
+                borderColor: '#d1d5db',
+                borderDash: [6, 3],
+                pointRadius: 3,
+                tension: 0.2,
+                fill: false
+              },
+              {
+                label: 'Expected',
+                data: cumExpectedData,
+                borderColor: '#fbbf24',
+                pointRadius: 4,
+                tension: 0.2,
+                fill: false
+              },
+              {
+                label: 'Actual',
+                data: cumActualData,
+                borderColor: '#f97316',
+                pointRadius: 5,
+                borderWidth: 3,
+                tension: 0.2,
+                fill: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+              x: { grid: { display: false } },
+              y: { ticks: { callback: function(v) { return '$' + v.toLocaleString(); } } }
+            }
+          }
+        });
       }
     }
 
@@ -176,6 +633,7 @@ import workshop from "../data/workshop.json";
 
       // Show main content
       document.getElementById('main-empty').style.display = 'none';
+      document.getElementById('report-content').style.display = 'none';
       var content = document.getElementById('main-content');
       content.style.display = 'block';
 
