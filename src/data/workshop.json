@@ -21,9 +21,23 @@
     "name": "Roy Getz",
     "title": "Expert EOS Implementer",
     "photo": "/images/roy-getz.jpeg",
-    "sessions": "650+",
+    "sessions": "700+",
     "yearsExperience": "40+",
-    "bio": "Roy Getz is an Expert EOS Implementer with over 40 years of leading and managing people. With 650+ full-day EOS sessions under his belt, Roy brings passion, energy, and authenticity to every workshop — sharing real-life successes and failures to help leaders build stronger, more cohesive organizations."
+    "bio": "Roy Getz is an Expert EOS Implementer with over 40 years of leading and managing people. With 700+ full-day EOS sessions under his belt, Roy brings passion, energy, and authenticity to every workshop — sharing real-life successes and failures to help leaders build stronger, more cohesive organizations.",
+    "traits": [
+      {
+        "label": "Passion",
+        "description": "A true love for leading and managing people since he was 19 years old in organizations large and small, Roy's passionate about providing tools and coaching to help Leaders and Managers leave the Great Boss! Workshop inspired to make immediate changes and improvements."
+      },
+      {
+        "label": "Energy",
+        "description": "Roy's engaging and entertaining presentation and facilitation style ensures that all attendees are dialed in and effectively learning principles to optimize their Leadership and Management skills."
+      },
+      {
+        "label": "Authenticity",
+        "description": "Roy shares a treasure trove of stories that illustrate his real-life successes and failures over 40+ years of leading and managing people."
+      }
+    ]
   },
   "agenda": [
     {
@@ -93,7 +107,7 @@
     },
     {
       "question": "How many people attend each workshop?",
-      "answer": "Workshops are capped at 25 attendees to ensure a hands-on, interactive experience with plenty of time for individual questions and discussion."
+      "answer": "Workshops are capped at 40 attendees to ensure a hands-on, interactive experience with plenty of time for individual questions and discussion."
     }
   ],
   "testimonials": [
@@ -117,7 +131,7 @@
     }
   ],
   "meta": {
-    "description": "Work alongside an EOS Implementer and other bosses to learn how to develop more accountable, high-performing teams. Led by Roy Getz, Expert EOS Implementer with 650+ sessions.",
+    "description": "Work alongside an EOS Implementer and other bosses to learn how to develop more accountable, high-performing teams. Led by Roy Getz, Expert EOS Implementer with 700+ sessions.",
     "ogImage": "/images/og-image.jpg"
   }
 }

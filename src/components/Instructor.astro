@@ -1,5 +1,6 @@
 ---
 import workshop from "../data/workshop.json";
+import SectionHeading from "./SectionHeading.astro";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const stats = [
@@ -11,9 +12,11 @@ const stats = [
 
 <section id="instructor" class="bg-eos-light py-16 md:py-24">
   <div class="mx-auto max-w-5xl px-4">
-    <h2 class="text-center text-3xl font-bold text-eos-dark md:text-4xl">Your Instructor</h2>
+    <div class="flex flex-col items-center">
+      <SectionHeading>Your Instructor</SectionHeading>
+    </div>
 
-    <div class="mt-12 flex flex-col items-center gap-8 md:flex-row md:gap-12">
+    <div class="mt-12 flex flex-col items-center gap-8 md:flex-row md:items-start md:gap-12">
       <div class="shrink-0">
         <div class="h-64 w-64 overflow-hidden rounded-2xl bg-gray-200 shadow-lg">
           <img
@@ -32,6 +35,15 @@ const stats = [
         <p class="mt-4 text-lg leading-relaxed text-gray-600">
           {workshop.instructor.bio}
         </p>
+
+        <ol class="mt-6 space-y-4 text-left text-gray-700 leading-relaxed">
+          {workshop.instructor.traits.map((trait, i) => (
+            <li class="flex gap-3">
+              <span class="font-semibold text-eos-dark shrink-0">{i + 1}.</span>
+              <p><span class="font-semibold text-eos-dark">{trait.label}</span> – {trait.description}</p>
+            </li>
+          ))}
+        </ol>
 
         <div class="mt-6 flex flex-wrap justify-center gap-6 md:justify-start">
           {stats.map((stat) => (

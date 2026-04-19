@@ -1,0 +1,20 @@
+---
+interface Props {
+  align?: "left" | "center";
+  tone?: "dark" | "light";
+}
+
+const { align = "center", tone = "dark" } = Astro.props;
+const alignClass = align === "center" ? "items-center text-center" : "items-start text-left";
+const barClass = align === "center" ? "hidden" : "inline-block";
+const textClass = tone === "light" ? "text-white" : "text-eos-dark";
+---
+
+<div class={`flex flex-col ${alignClass}`}>
+  <div class="flex items-center gap-3">
+    <span class={`h-8 w-1.5 rounded-sm bg-eos-orange ${barClass}`} aria-hidden="true"></span>
+    <h2 class={`text-3xl font-extrabold uppercase tracking-wide md:text-4xl ${textClass}`}>
+      <slot />
+    </h2>
+  </div>
+</div>

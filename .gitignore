@@ -5,3 +5,4 @@ dist/
 .netlify/
 deno.lock
 skills-lock.json
+content/
