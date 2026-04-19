@@ -73,7 +73,7 @@ const jsonLd = {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Roboto+Condensed:wght@300;400;700&display=swap"
       rel="stylesheet"
     />
 
@@ -97,14 +97,16 @@ const jsonLd = {
       <slot />
     </main>
 
-    <footer class="border-t border-gray-200 bg-white py-8 text-center text-sm text-gray-500">
+    <footer class="border-t border-gray-200 bg-white py-10 text-center text-sm text-gray-500">
       <div class="mx-auto max-w-4xl px-4">
+        <img
+          src={`${base}/images/brand/gb-stacked-color.png`}
+          alt="Great Boss Workshop"
+          class="mx-auto mb-4 h-12 w-auto"
+        />
         <p>&copy; {new Date().getFullYear()} {workshop.instructor.name}, {workshop.instructor.title}</p>
-        <p class="mt-1">
-          Powered by the
-          <a href="https://www.eosworldwide.com" target="_blank" rel="noopener noreferrer" class="text-eos-orange hover:underline">
-            Entrepreneurial Operating System (EOS)
-          </a>
+        <p class="mt-3 text-xs text-gray-400">
+          EOS® and The Entrepreneurial Operating System® are registered trademarks of EOS Worldwide, LLC.
         </p>
       </div>
     </footer>

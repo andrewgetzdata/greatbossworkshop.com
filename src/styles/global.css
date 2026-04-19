@@ -4,13 +4,18 @@
   /* EOS Official Brand Colors */
   --color-eos-orange: #FF7900;
   --color-eos-orange-light: #FF9933;
-  --color-eos-dark: #152233;
+  --color-eos-dark: #142233;
   --color-eos-dark-light: #1E3044;
 
-  /* Supporting palette */
-  --color-eos-gray: #4A5568;
-  --color-eos-light: #F7FAFC;
-  --color-eos-gold: #D4A843;
+  /* Brand secondary palette */
+  --color-eos-navy-gray: #445777;
+  --color-eos-blue-gray: #E5E8EB;
+  --color-eos-peach: #FBEDE2;
+  --color-eos-slate: #3B4343;
 
-  --font-sans: "Roboto", system-ui, sans-serif;
+  /* Neutral surface (used for alternating section backgrounds) */
+  --color-eos-light: #F7FAFC;
+
+  --font-sans: "Montserrat", system-ui, sans-serif;
+  --font-condensed: "Roboto Condensed", system-ui, sans-serif;
 }

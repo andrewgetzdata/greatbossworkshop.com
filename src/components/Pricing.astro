@@ -1,5 +1,6 @@
 ---
 import workshop from "../data/workshop.json";
+import SectionHeading from "./SectionHeading.astro";
 
 const inclusions = [
   "Full-day workshop (7 hours)",
@@ -13,25 +14,15 @@ const inclusions = [
 
 <section id="pricing" class="bg-eos-dark py-16 text-white md:py-24">
   <div class="mx-auto max-w-4xl px-4">
-    <div class="text-center">
-      <h2 class="text-3xl font-bold md:text-4xl">Invest in Your Leadership</h2>
-      <p class="mx-auto mt-3 max-w-xl text-lg text-gray-400">
+    <div class="flex flex-col items-center">
+      <SectionHeading tone="light">Invest in Your Leadership</SectionHeading>
+      <p class="mx-auto mt-3 max-w-xl text-center text-lg text-gray-400">
         Choose your workshop date and preferred payment method.
       </p>
     </div>
 
-    <!-- Date Selector (populated by JS) -->
-    <div class="mt-10">
-      <h3 class="mb-4 text-center text-sm font-semibold uppercase tracking-wide text-gray-400">
-        Select a Workshop Date
-      </h3>
-      <div id="session-list" class="mx-auto grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
-        <p id="sessions-loading" class="text-sm text-gray-500">Loading available dates...</p>
-      </div>
-    </div>
-
     <!-- What's Included -->
-    <div class="mx-auto mt-12 max-w-2xl rounded-2xl bg-white p-8 text-gray-900 shadow-xl">
+    <div class="mx-auto mt-10 max-w-2xl rounded-2xl bg-white p-8 text-gray-900 shadow-xl">
       <h3 class="text-center text-2xl font-bold text-eos-dark">What's Included</h3>
       <ul class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {inclusions.map((item) => (
@@ -45,8 +36,22 @@ const inclusions = [
       </ul>
     </div>
 
+    <!-- Date Selector (populated by JS) -->
+    <div class="mt-12">
+      <h3 class="mb-4 text-center text-sm font-semibold uppercase tracking-wide text-gray-400">
+        Select a Workshop Date
+      </h3>
+      <div id="session-list" class="mx-auto grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+        <p id="sessions-loading" class="text-sm text-gray-500">Loading available dates...</p>
+      </div>
+    </div>
+
+    <p id="select-date-hint" class="mt-6 text-center text-sm text-eos-orange">
+      Select a workshop date and payment method to continue &darr;
+    </p>
+
     <!-- Payment Method -->
-    <div class="mt-8">
+    <div class="mt-6">
       <h3 class="mb-4 text-center text-sm font-semibold uppercase tracking-wide text-gray-400">
         Choose Payment Method
       </h3>
@@ -58,7 +63,7 @@ const inclusions = [
         >
           <span class="absolute right-0 top-0 rounded-bl-lg bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wide">Recommended</span>
           <span class="mt-2 block text-sm font-bold uppercase tracking-wide">Bank Transfer (ACH)</span>
-          <span id="price-ach" class="mt-2 block text-4xl font-black">--</span>
+          <span id="price-ach" class="mt-2 block text-4xl font-extrabold">--</span>
           <span class="mt-2 block text-sm font-semibold opacity-90">No processing fee</span>
         </button>
 
@@ -68,15 +73,18 @@ const inclusions = [
           class="w-full rounded-xl border-2 border-white/30 bg-white/5 px-8 py-7 text-center text-white shadow-lg transition hover:border-white/60 hover:bg-white/10 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span class="block text-sm font-bold uppercase tracking-wide">Credit / Debit Card</span>
-          <span id="price-card" class="mt-2 block text-4xl font-black">--</span>
+          <span id="price-card" class="mt-2 block text-4xl font-extrabold">--</span>
           <span class="mt-2 block text-sm font-semibold opacity-70">Includes 3% processing fee</span>
         </button>
       </div>
-    </div>
 
-    <p id="select-date-hint" class="mt-4 text-center text-sm text-eos-orange">
-      &uarr; Select a workshop date and payment method to continue
-    </p>
+      <p class="mx-auto mt-4 max-w-2xl text-center text-xs text-gray-400">
+        <svg class="mr-1 inline-block h-3.5 w-3.5 align-[-2px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        ACH payments are processed securely through Stripe and Plaid — the same bank-verification technology used by major financial institutions. Your credentials are never shared with us or stored on this site.
+      </p>
+    </div>
 
     <p class="mt-4 text-center text-sm text-gray-500">
       Secure payment powered by Stripe. Full refund available 14+ days before the workshop.

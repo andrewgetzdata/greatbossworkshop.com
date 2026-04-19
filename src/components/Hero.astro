@@ -1,23 +1,34 @@
 ---
 import workshop from "../data/workshop.json";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
 <section id="hero" class="relative overflow-hidden bg-gradient-to-br from-eos-dark to-eos-dark-light py-20 text-white md:py-32">
-  <div class="absolute inset-0 opacity-10">
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,121,0,0.2),transparent_70%)]"></div>
-  </div>
+  <svg class="absolute inset-0 h-full w-full opacity-[0.06]" aria-hidden="true">
+    <defs>
+      <pattern id="bang-pattern" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse" patternTransform="rotate(12)">
+        <circle cx="40" cy="40" r="18" fill="#FF7900"/>
+        <rect x="38" y="30" width="4" height="11" rx="0.5" fill="#142233"/>
+        <circle cx="40" cy="46" r="2" fill="#142233"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#bang-pattern)"/>
+  </svg>
 
-  <div class="relative mx-auto max-w-4xl px-4 text-center">
-    <p class="mb-4 text-sm font-semibold uppercase tracking-widest text-eos-orange">
-      An EOS Worldwide Workshop
-    </p>
+  <div class="relative mx-auto max-w-5xl px-4 text-center">
+    <img
+      src={`${base}/images/brand/gb-horizontal-white.png`}
+      alt="Great Boss Workshop"
+      class="mx-auto mb-10 h-20 w-auto md:h-28"
+    />
 
-    <h1 class="text-4xl font-black leading-tight md:text-6xl">
-      Become the Boss Everyone<br class="hidden md:inline" /> Wants to Work For
+    <h1 class="text-3xl font-extrabold uppercase leading-tight tracking-tight md:text-5xl">
+      Elevate Your Leadership & Maximize Your Team Energy
     </h1>
 
     <p class="mx-auto mt-6 max-w-2xl text-lg text-gray-300 md:text-xl">
-      Work alongside an EOS Implementer® and other leaders to master the
+      Work along side an expert EOS® Implementer® and other leaders to master the
       leadership and management practices that build accountable, high-performing teams.
     </p>
 
@@ -38,28 +49,6 @@ import workshop from "../data/workshop.json";
       </a>
     </div>
 
-    <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
-      <span class="flex items-center gap-1.5">
-        <svg class="h-4 w-4 text-eos-orange" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-        {workshop.instructor.sessions} Sessions Led
-      </span>
-      <span class="hidden text-gray-600 md:inline">|</span>
-      <span class="flex items-center gap-1.5">
-        <svg class="h-4 w-4 text-eos-orange" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-        {workshop.instructor.yearsExperience} Years Experience
-      </span>
-      <span class="hidden text-gray-600 md:inline">|</span>
-      <span class="flex items-center gap-1.5">
-        <svg class="h-4 w-4 text-eos-orange" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-        Full Toolkit Included
-      </span>
-    </div>
   </div>
 </section>
 
