@@ -1,24 +1,130 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Hero from "../components/Hero.astro";
-import PainPoints from "../components/PainPoints.astro";
-import Agenda from "../components/Agenda.astro";
-import Instructor from "../components/Instructor.astro";
-import Testimonials from "../components/Testimonials.astro";
-import Pricing from "../components/Pricing.astro";
-import FAQ from "../components/FAQ.astro";
-import FinalCTA from "../components/FinalCTA.astro";
-import StickyMobileCTA from "../components/StickyMobileCTA.astro";
+import workshop from "../data/workshop.json";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const { instructor } = workshop;
+
+const stats = [
+  { value: instructor.sessions, label: "EOS Sessions" },
+  { value: instructor.yearsExperience, label: "Years Leading" },
+];
+
+const description = `${instructor.name} — ${instructor.title}. Helping leaders build accountable, high-performing teams.`;
 ---
 
-<Layout title="Great Boss Workshop | EOS Leadership Training with Roy Getz">
-  <Hero />
-  <PainPoints />
-  <Agenda />
-  <Instructor />
-  <Testimonials />
-  <Pricing />
-  <FAQ />
-  <FinalCTA />
-  <StickyMobileCTA />
+<Layout
+  title={`${instructor.name} | ${instructor.title}`}
+  description={description}
+>
+  <!-- Hero -->
+  <section class="bg-white">
+    <div class="mx-auto grid max-w-5xl gap-12 px-4 py-16 md:grid-cols-[1fr_auto] md:items-center md:gap-16 md:py-28">
+      <div>
+        <p class="font-condensed text-sm font-bold uppercase tracking-[0.2em] text-eos-orange">
+          {instructor.title}
+        </p>
+        <h1 class="mt-4 font-condensed text-4xl font-bold leading-[1.05] tracking-tight text-eos-dark md:text-6xl">
+          {instructor.name}
+        </h1>
+        <p class="mt-6 max-w-xl text-lg leading-relaxed text-gray-600 md:text-xl">
+          Helping leaders build accountable, high-performing teams — through 700+ EOS sessions and four decades of leading people.
+        </p>
+
+        <div class="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <a
+            href="/greatbossworkshop"
+            class="inline-flex items-center gap-2 rounded-lg bg-eos-orange px-7 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-eos-orange-light hover:shadow-md focus:outline-none focus:ring-2 focus:ring-eos-orange focus:ring-offset-2"
+          >
+            Attend the Great Boss Workshop
+            <span aria-hidden="true">→</span>
+          </a>
+          <a
+            href="#about"
+            class="text-sm font-semibold uppercase tracking-wide text-eos-dark/70 transition hover:text-eos-orange"
+          >
+            About Roy
+          </a>
+        </div>
+      </div>
+
+      <div class="order-first md:order-none">
+        <div class="mx-auto h-56 w-56 overflow-hidden rounded-full bg-gray-100 shadow-md md:h-72 md:w-72">
+          <img
+            src={`${base}${instructor.photo}`}
+            alt={instructor.name}
+            class="h-full w-full object-cover"
+            loading="eager"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="border-t border-gray-100 bg-eos-light">
+    <div class="mx-auto max-w-3xl px-4 py-20 md:py-28">
+      <p class="font-condensed text-sm font-bold uppercase tracking-[0.2em] text-eos-orange">About</p>
+      <h2 class="mt-3 font-condensed text-3xl font-bold tracking-tight text-eos-dark md:text-4xl">
+        Four decades of leading people — distilled into practical tools.
+      </h2>
+
+      <div class="mt-8 space-y-5 text-lg leading-relaxed text-gray-700">
+        <p>
+          {instructor.bio}
+        </p>
+        <p>
+          Three things shape how Roy works with leaders:
+        </p>
+      </div>
+
+      <ol class="mt-6 space-y-5 text-gray-700">
+        {instructor.traits.map((trait, i) => (
+          <li class="flex gap-4">
+            <span class="font-condensed text-sm font-bold text-eos-orange shrink-0 pt-1">
+              0{i + 1}
+            </span>
+            <p class="leading-relaxed">
+              <span class="font-semibold text-eos-dark">{trait.label}.</span>{" "}
+              {trait.description}
+            </p>
+          </li>
+        ))}
+      </ol>
+
+      <div class="mt-12 flex flex-wrap gap-x-12 gap-y-4 border-t border-gray-200 pt-8">
+        {stats.map((stat) => (
+          <div>
+            <div class="font-condensed text-3xl font-bold text-eos-dark">{stat.value}</div>
+            <div class="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              {stat.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Workshop card -->
+  <section class="bg-white">
+    <div class="mx-auto max-w-3xl px-4 py-20 md:py-28">
+      <p class="font-condensed text-sm font-bold uppercase tracking-[0.2em] text-eos-orange">Work with Roy</p>
+      <h2 class="mt-3 font-condensed text-3xl font-bold tracking-tight text-eos-dark md:text-4xl">
+        The Great Boss Workshop
+      </h2>
+      <p class="mt-5 text-lg leading-relaxed text-gray-700">
+        A full day for leaders who want to build a more accountable, high-performing team. Roy walks small groups through the leadership and management practices he's refined across {instructor.sessions} EOS sessions — and you leave with a toolkit you can use Monday morning.
+      </p>
+
+      <div class="mt-8">
+        <a
+          href="/greatbossworkshop"
+          class="inline-flex items-center gap-2 rounded-lg border border-eos-dark bg-eos-dark px-6 py-3 text-base font-semibold text-white transition hover:border-eos-orange hover:bg-eos-orange focus:outline-none focus:ring-2 focus:ring-eos-orange focus:ring-offset-2"
+        >
+          See workshop details
+          <span aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
 </Layout>
