@@ -1,6 +1,10 @@
 # CLAUDE.md
 
-Landing page and ticket sales for the Great Boss Workshop — a full-day EOS leadership workshop led by Roy Getz.
+Personal site for Roy Getz (Expert EOS Implementer) plus ticket sales for the Great Boss Workshop. Two pages:
+- `/` — Roy Getz personal site (quiet, minimal: hero + about + workshop card)
+- `/greatbossworkshop` — full Great Boss Workshop landing page with checkout
+
+Eventual primary domain is `roygetz.com`. The old `greatbossworkshop.com` domain is being retired.
 
 ## Stack
 
@@ -15,10 +19,10 @@ No DB on purpose. Workshop sessions are Stripe Products with `workshop_type=grea
 
 ```
 src/
-  components/   Astro + one React component (StripeCheckout.tsx)
-  data/         workshop.json — all static copy (instructor bio, agenda, FAQ, location, pricing defaults)
-  layouts/      Layout.astro — SEO, JSON-LD, PostHog, Google Fonts
-  pages/        index.astro, admin.astro, success.astro
+  components/   Astro + one React component (StripeCheckout.tsx). Header.astro is the shared nav (sticky, "Roy Getz" wordmark + "Workshop" link).
+  data/         workshop.json — all static copy (instructor bio, agenda, FAQ, location, pricing defaults). Roy's bio/traits/stats are reused on /.
+  layouts/      Layout.astro — SEO, JSON-LD (parameterizable via `jsonLd` prop, defaults to Person schema for Roy), PostHog, Google Fonts, mounts Header
+  pages/        index.astro (Roy), greatbossworkshop.astro (workshop), admin.astro, success.astro
   styles/       global.css — Tailwind theme with EOS brand tokens
 netlify/
   functions/
@@ -82,3 +86,5 @@ Pushes to `main` auto-deploy on Netlify. Sandbox: https://great-boss-workshop.ne
 2. Edit content in `workshop.json` when possible, not in the component.
 3. Test responsive at mobile (<640px), tablet (`sm`), desktop (`md`+).
 4. If I touch the Hero, Pricing, or checkout flow, re-read README test cases §1–6.
+5. The Roy homepage (`/`) is intentionally quiet and short — resist adding sections, testimonials, FAQs there. Heavy marketing lives on `/greatbossworkshop`.
+6. Both pages share the same `Header.astro` and the same `Layout.astro` footer. Brand-specific images (the GB workshop logo) belong inside the workshop page's components, not in shared chrome.

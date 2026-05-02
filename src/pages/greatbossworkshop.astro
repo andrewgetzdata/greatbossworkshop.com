@@ -1,0 +1,60 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Hero from "../components/Hero.astro";
+import PainPoints from "../components/PainPoints.astro";
+import Agenda from "../components/Agenda.astro";
+import Instructor from "../components/Instructor.astro";
+import Testimonials from "../components/Testimonials.astro";
+import Pricing from "../components/Pricing.astro";
+import FAQ from "../components/FAQ.astro";
+import FinalCTA from "../components/FinalCTA.astro";
+import StickyMobileCTA from "../components/StickyMobileCTA.astro";
+import workshop from "../data/workshop.json";
+
+const workshopJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "EducationEvent",
+  name: workshop.title,
+  description: workshop.meta.description,
+  location: {
+    "@type": "Place",
+    name: workshop.location.name,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: workshop.location.address,
+      addressLocality: workshop.location.city,
+      addressRegion: workshop.location.state,
+      postalCode: workshop.location.zip,
+      addressCountry: "US",
+    },
+  },
+  organizer: {
+    "@type": "Person",
+    name: workshop.instructor.name,
+    jobTitle: workshop.instructor.title,
+  },
+  offers: {
+    "@type": "Offer",
+    price: workshop.pricing.basePrice.toString(),
+    priceCurrency: workshop.pricing.currency,
+    availability: "https://schema.org/InStock",
+  },
+};
+---
+
+<Layout
+  title="Great Boss Workshop | EOS Leadership Training with Roy Getz"
+  description={workshop.meta.description}
+  ogImage={workshop.meta.ogImage}
+  jsonLd={workshopJsonLd}
+>
+  <Hero />
+  <PainPoints />
+  <Agenda />
+  <Instructor />
+  <Testimonials />
+  <Pricing />
+  <FAQ />
+  <FinalCTA />
+  <StickyMobileCTA />
+</Layout>

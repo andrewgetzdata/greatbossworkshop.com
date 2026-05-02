@@ -1,0 +1,31 @@
+---
+const pathname = Astro.url.pathname.replace(/\/$/, "") || "/";
+const isWorkshop = pathname === "/greatbossworkshop";
+---
+
+<header class="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 md:py-5">
+    <a
+      href="/"
+      class="font-condensed text-lg font-bold uppercase tracking-wide text-eos-dark transition hover:text-eos-orange md:text-xl"
+      aria-label="Roy Getz — home"
+    >
+      Roy Getz
+    </a>
+
+    <nav aria-label="Primary">
+      <a
+        href="/greatbossworkshop"
+        class:list={[
+          "font-condensed text-sm font-semibold uppercase tracking-wide transition md:text-base",
+          isWorkshop
+            ? "text-eos-orange underline decoration-2 underline-offset-8"
+            : "text-eos-dark hover:text-eos-orange",
+        ]}
+        aria-current={isWorkshop ? "page" : undefined}
+      >
+        Workshop
+      </a>
+    </nav>
+  </div>
+</header>
