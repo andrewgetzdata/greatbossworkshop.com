@@ -46,6 +46,8 @@ Push the branch to origin: `git push -u origin <branch-name>`
 
 Check if a PR already exists for this branch: `gh pr view --json url 2>/dev/null`
 
+Write every **Test plan** item as a concrete, checkable step — a command to run, an endpoint to hit, a specific UI behavior to observe — never a vague "looks good". Each item must be something you can actually validate in Step 7. Leave all items unchecked (`- [ ]`) at creation; Step 7 checks them.
+
 - **If no PR exists:** Create one with `gh pr create`. Write a concise title and body summarizing all commits on the branch. Always assign the PR to the current user with `--assignee @me`. Use the standard PR template:
   ```
   gh pr create --assignee @me --title "<title>" --body "$(cat <<'EOF'
@@ -61,8 +63,20 @@ Check if a PR already exists for this branch: `gh pr view --json url 2>/dev/null
   ```
 - **If a PR already exists:** Tell the user the PR was updated with the new push and show the URL.
 
+## Step 7: Validate the test plan
+
+Don't leave the test plan as unverified boxes. Actually run each item you can:
+
+1. **Execute the checkable items.** Run the commands (`npm test`, `npm run build`, `curl` an endpoint), and for UI/behavioral items drive them however you can (headless browser, request interception to simulate failure/empty states, inspecting served output). Prefer real evidence over inference.
+2. **Check the boxes you proved.** Edit the PR body to mark validated items `- [x]`. If `gh pr edit` fails on a projects-classic GraphQL deprecation error, update the body via REST instead: `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -f body="$(cat body.md)"`.
+3. **Leave genuinely manual items unchecked**, and say plainly which ones need a human (e.g. "confirm the production deploy goes green after merge") rather than checking them on inference.
+4. **Post an evidence comment** on the PR summarizing what was validated and how (a short table: check → result → evidence), via `gh api -X POST repos/<owner>/<repo>/issues/<n>/comments -f body=...`.
+
+The goal: every checked box is backed by evidence the user can see in the PR, and every unchecked box has a stated reason.
+
 ## Notes
 - Never force-push.
 - Never push directly to main.
 - Always assign new PRs to the current user (`--assignee @me`).
+- Every test-plan item must be written to be verifiable, and validated in Step 7 — check only boxes backed by real evidence.
 - If any step fails, stop and tell the user what went wrong.
