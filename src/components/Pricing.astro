@@ -42,7 +42,7 @@ const inclusions = [
         Select a Workshop Date
       </h3>
       <div id="session-list" class="mx-auto grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
-        <p id="sessions-loading" class="text-sm text-gray-500">Loading available dates...</p>
+        <p id="sessions-loading" class="col-span-full text-center text-sm text-gray-500">Loading available dates...</p>
       </div>
     </div>
 
@@ -114,7 +114,7 @@ const inclusions = [
     if (loading) loading.remove();
 
     if (!sessions || sessions.length === 0) {
-      container.innerHTML = '<p class="text-gray-400">No upcoming workshops scheduled. Check back soon!</p>';
+      container.innerHTML = '<p class="col-span-full text-center text-gray-400">No upcoming workshops scheduled. Check back soon!</p>';
       return;
     }
 
