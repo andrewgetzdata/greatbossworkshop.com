@@ -42,7 +42,7 @@ const inclusions = [
         Select a Workshop Date
       </h3>
       <div id="session-list" class="mx-auto grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
-        <p id="sessions-loading" class="text-sm text-gray-500">Loading available dates...</p>
+        <p id="sessions-loading" class="col-span-full text-center text-sm text-gray-500">Loading available dates...</p>
       </div>
     </div>
 
@@ -114,7 +114,7 @@ const inclusions = [
     if (loading) loading.remove();
 
     if (!sessions || sessions.length === 0) {
-      container.innerHTML = '<p class="text-gray-400">No upcoming workshops scheduled. Check back soon!</p>';
+      container.innerHTML = '<p class="col-span-full text-center text-gray-400">No upcoming workshops scheduled. Check back soon!</p>';
       return;
     }
 
@@ -225,8 +225,19 @@ const inclusions = [
         .catch(function() {});
 
     } catch (e) {
+      // Backend unreachable (not an empty schedule — that's handled in renderSessions).
+      // Auto-retry once after a short delay before asking the visitor to act.
       var loading = document.getElementById('sessions-loading');
-      if (loading) loading.textContent = 'Unable to load sessions. Please refresh the page.';
+      if (loading) loading.textContent = 'Still loading available dates…';
+      setTimeout(function() {
+        fetch('/api/list-sessions?fresh=1')
+          .then(function(r) { if (!r.ok) throw new Error('Failed'); return r.json(); })
+          .then(function(retryData) { renderSessions(retryData.sessions); })
+          .catch(function() {
+            var el = document.getElementById('sessions-loading');
+            if (el) el.textContent = "We couldn't load workshop dates right now. Please try again in a few minutes.";
+          });
+      }, 3000);
     }
   })();
 
