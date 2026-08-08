@@ -46,9 +46,9 @@ Push the branch to origin: `git push -u origin <branch-name>`
 
 Check if a PR already exists for this branch: `gh pr view --json url 2>/dev/null`
 
-- **If no PR exists:** Create one with `gh pr create`. Write a concise title and body summarizing all commits on the branch. Use the standard PR template:
+- **If no PR exists:** Create one with `gh pr create`. Write a concise title and body summarizing all commits on the branch. Always assign the PR to the current user with `--assignee @me`. Use the standard PR template:
   ```
-  gh pr create --title "<title>" --body "$(cat <<'EOF'
+  gh pr create --assignee @me --title "<title>" --body "$(cat <<'EOF'
   ## Summary
   <bullet points>
 
@@ -64,4 +64,5 @@ Check if a PR already exists for this branch: `gh pr view --json url 2>/dev/null
 ## Notes
 - Never force-push.
 - Never push directly to main.
+- Always assign new PRs to the current user (`--assignee @me`).
 - If any step fails, stop and tell the user what went wrong.
