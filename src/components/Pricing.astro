@@ -225,8 +225,19 @@ const inclusions = [
         .catch(function() {});
 
     } catch (e) {
+      // Backend unreachable (not an empty schedule — that's handled in renderSessions).
+      // Auto-retry once after a short delay before asking the visitor to act.
       var loading = document.getElementById('sessions-loading');
-      if (loading) loading.textContent = 'Unable to load sessions. Please refresh the page.';
+      if (loading) loading.textContent = 'Still loading available dates…';
+      setTimeout(function() {
+        fetch('/api/list-sessions?fresh=1')
+          .then(function(r) { if (!r.ok) throw new Error('Failed'); return r.json(); })
+          .then(function(retryData) { renderSessions(retryData.sessions); })
+          .catch(function() {
+            var el = document.getElementById('sessions-loading');
+            if (el) el.textContent = "We couldn't load workshop dates right now. Please try again in a few minutes.";
+          });
+      }, 3000);
     }
   })();
 
