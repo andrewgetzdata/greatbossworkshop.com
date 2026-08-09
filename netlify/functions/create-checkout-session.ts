@@ -83,6 +83,9 @@ export async function handler(event: {
       success_url: `${siteUrl}/success?session_id={CHECKOUT_SESSION_ID}&product=${productId}`,
       cancel_url: `${siteUrl}/#pricing`,
       customer_creation: "always",
+      // Collect EOS-required contact fields natively in Stripe Checkout.
+      billing_address_collection: "required",
+      phone_number_collection: { enabled: true },
       metadata: {
         workshop_product: productId,
         workshop_session_date: sessionDate,
