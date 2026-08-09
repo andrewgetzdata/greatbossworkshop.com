@@ -1,4 +1,5 @@
 import { stripe, getTicketsSoldForProduct } from "./lib/stripe.js";
+import { parseAttendeeFields, toMetadata } from "../../src/lib/attendee-fields.js";
 
 export async function handler(event: { httpMethod: string; body: string | null }) {
   if (event.httpMethod !== "POST") {
@@ -6,7 +7,7 @@ export async function handler(event: { httpMethod: string; body: string | null }
   }
 
   try {
-    const { paymentMethod, productId } = JSON.parse(event.body || "{}");
+    const { paymentMethod, productId, attendee } = JSON.parse(event.body || "{}");
 
     if (paymentMethod !== "ach" && paymentMethod !== "card") {
       return {
@@ -19,6 +20,17 @@ export async function handler(event: { httpMethod: string; body: string | null }
       return {
         statusCode: 400,
         body: JSON.stringify({ error: "Product ID is required" }),
+      };
+    }
+
+    const attendeeResult = parseAttendeeFields(attendee || {});
+    if (!attendeeResult.ok) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: "Missing required attendee fields",
+          fields: attendeeResult.errors,
+        }),
       };
     }
 
@@ -90,6 +102,7 @@ export async function handler(event: { httpMethod: string; body: string | null }
         workshop_address: address,
         workshop_maps_url: mapsUrl,
         workshop_webinar_url: webinarUrl,
+        ...toMetadata(attendeeResult.fields),
       },
       ...(paymentMethod === "ach" && {
         payment_method_options: {
