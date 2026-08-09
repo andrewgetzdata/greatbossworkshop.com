@@ -1,0 +1,39 @@
+name: Export archived-event attendees
+
+on:
+  schedule:
+    - cron: "0 13 * * *" # daily ~8-9am ET
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Export new archived events
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_REPLY_TO: ${{ secrets.EMAIL_REPLY_TO }}
+          EXPORT_RECIPIENTS: ${{ secrets.EXPORT_RECIPIENTS }}
+        run: npx tsx scripts/export-archived-events.ts
+      - name: Commit updated seen-state
+        run: |
+          if ! git diff --quiet data/seen-archived-events.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data/seen-archived-events.json
+            git commit -m "chore: record exported archived events [skip ci]"
+            git push
+          else
+            echo "No new events — seen-state unchanged."
+          fi
