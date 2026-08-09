@@ -38,6 +38,18 @@ If already on a feature branch, stay on it.
 
 If there are already unpushed commits and no new changes, skip this step.
 
+## Step 4.5: Run local checks before pushing
+
+Run the same gates CI will run, so nothing broken reaches a PR:
+
+```
+npm run typecheck   # astro check + tsc on netlify/functions — catches type errors the editor/build miss
+npm test            # (also runs typecheck) unit tests
+npm run build       # production build
+```
+
+If any fails, **stop and fix it before pushing** — don't open a PR on red. (Type errors in particular, e.g. a wrong property name on an SDK call, won't fail `astro build` but will fail `typecheck`.) If the repo lacks one of these scripts, skip that command.
+
 ## Step 5: Push
 
 Push the branch to origin: `git push -u origin <branch-name>`
