@@ -1,8 +1,9 @@
 /**
- * Daily archived-event attendee export.
+ * Daily past-event attendee export.
  *
- * Lists Stripe archived (active:false) great_boss workshops, finds ones not yet
- * exported (dedup against data/seen-archived-events.json), builds a paid-only
+ * Lists great_boss workshops whose session_date has passed (< today), regardless
+ * of archived status, finds ones not yet exported (dedup against
+ * data/seen-archived-events.json), builds a paid-only
  * attendee CSV per new event, and emails them to EXPORT_RECIPIENTS via Resend.
  *
  * Idempotency: the seen-state file is only updated AFTER a successful send, so a
@@ -37,11 +38,23 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "event";
 }
 
-/** All archived great_boss products (paginated). */
-async function listArchivedWorkshops(): Promise<ProductLike[]> {
+/**
+ * great_boss products whose session_date is in the past (< today), regardless
+ * of whether they've been archived in Stripe yet. Scans both active and
+ * archived products so a past event still marked active isn't missed. Dedup
+ * (seen-state) guarantees each past event's CSV emails exactly once.
+ */
+async function listPastWorkshops(): Promise<ProductLike[]> {
+  const today = new Date().toISOString().split("T")[0];
   const out: ProductLike[] = [];
-  for await (const p of stripe.products.list({ active: false })) {
-    if (p.metadata?.workshop_type === "great_boss") {
+  const seenIds = new Set<string>();
+  for (const active of [true, false]) {
+    for await (const p of stripe.products.list({ active })) {
+      if (p.metadata?.workshop_type !== "great_boss") continue;
+      const sessionDate = p.metadata?.session_date;
+      if (!sessionDate || sessionDate >= today) continue; // only past events
+      if (seenIds.has(p.id)) continue;
+      seenIds.add(p.id);
       out.push({ id: p.id, name: p.name });
     }
   }
@@ -88,15 +101,15 @@ async function main() {
     .filter(Boolean);
 
   const seen = loadSeen();
-  const archived = await listArchivedWorkshops();
-  const newIds = diffNewEvents(archived.map((p) => p.id), seen);
+  const past = await listPastWorkshops();
+  const newIds = diffNewEvents(past.map((p) => p.id), seen);
 
   if (newIds.length === 0) {
-    console.log("No new archived events. Nothing to export.");
+    console.log("No new past events. Nothing to export.");
     return;
   }
 
-  const byId = new Map(archived.map((p) => [p.id, p]));
+  const byId = new Map(past.map((p) => [p.id, p]));
   const attachments: Array<{ filename: string; content: string }> = [];
   const exported: string[] = [];
   const summary: string[] = [];
@@ -122,7 +135,7 @@ async function main() {
     replyTo: process.env.EMAIL_REPLY_TO || undefined,
     to: recipients,
     subject: `Great Boss Workshop — attendee export (${exported.length} event${exported.length > 1 ? "s" : ""})`,
-    text: `New archived workshop attendee CSV(s) attached:\n\n${summary.join("\n")}`,
+    text: `Past workshop attendee CSV(s) attached:\n\n${summary.join("\n")}`,
     attachments,
   });
 
