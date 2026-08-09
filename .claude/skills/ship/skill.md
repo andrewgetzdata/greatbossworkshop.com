@@ -38,6 +38,18 @@ If already on a feature branch, stay on it.
 
 If there are already unpushed commits and no new changes, skip this step.
 
+## Step 4.5: Run local checks before pushing
+
+Run the same gates CI will run, so nothing broken reaches a PR:
+
+```
+npm run typecheck   # astro check + tsc on netlify/functions — catches type errors the editor/build miss
+npm test            # (also runs typecheck) unit tests
+npm run build       # production build
+```
+
+If any fails, **stop and fix it before pushing** — don't open a PR on red. (Type errors in particular, e.g. a wrong property name on an SDK call, won't fail `astro build` but will fail `typecheck`.) If the repo lacks one of these scripts, skip that command.
+
 ## Step 5: Push
 
 Push the branch to origin: `git push -u origin <branch-name>`
@@ -63,6 +75,24 @@ Write every **Test plan** item as a concrete, checkable step — a command to ru
   ```
 - **If a PR already exists:** Tell the user the PR was updated with the new push and show the URL.
 
+**Always verify the assignee — never assume `--assignee @me` worked.** After creating the PR, confirm it:
+
+```
+gh pr view <n> --json assignees --jq '[.assignees[].login]'
+```
+
+If the list is empty (this happens whenever the PR was created outside `gh pr create` — e.g. the REST fallback below — or when the flag silently no-ops), assign explicitly and re-verify:
+
+```
+gh api -X POST repos/<owner>/<repo>/issues/<n>/assignees --input - <<'JSON'
+{"assignees":["<your-login>"]}
+JSON
+```
+
+Do not report the PR as done until the assignee check shows the current user. (Get `<your-login>` from `gh api user --jq .login`. The `-f "assignees[]=name"` form does **not** work for this endpoint — use the JSON `--input` form above.)
+
+If `gh pr create` itself fails (e.g. the projects-classic GraphQL deprecation error), create the PR via REST instead — `gh api -X POST repos/<owner>/<repo>/pulls -f title=... -f head=<branch> -f base=main -f body=...` — and then run the explicit assign step above, since REST creation never applies `--assignee`.
+
 ## Step 7: Validate the test plan
 
 Don't leave the test plan as unverified boxes. Actually run each item you can:
@@ -77,6 +107,6 @@ The goal: every checked box is backed by evidence the user can see in the PR, an
 ## Notes
 - Never force-push.
 - Never push directly to main.
-- Always assign new PRs to the current user (`--assignee @me`).
+- Always assign new PRs to the current user, and **verify the assignee stuck** (`gh pr view <n> --json assignees`) — `--assignee @me` silently no-ops when the PR is created via REST or when creation errors. Assign explicitly and re-check if empty; don't report done until it shows the current user.
 - Every test-plan item must be written to be verifiable, and validated in Step 7 — check only boxes backed by real evidence.
 - If any step fails, stop and tell the user what went wrong.

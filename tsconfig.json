@@ -1,5 +1,16 @@
 {
   "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    // Set explicitly (not just inherited from the Astro preset) so editors that
+    // evaluate before the preset resolves still see them — this is what clears
+    // the "Cannot find module '*.json'" / "tsconfigs/strict not found" errors.
+    "resolveJsonModule": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "target": "ESNext",
+    "strict": true,
+    "skipLibCheck": true
+  },
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist", "netlify/functions"]
 }
