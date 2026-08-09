@@ -56,6 +56,15 @@ describe("forecastSession", () => {
     expect(f.maxRevenue).toBe(25 * 950);
   });
 
+  it("maxRemaining = actual + every remaining seat (future); just actual (past)", () => {
+    // future: $2937 booked + 22 remaining * 950
+    const fut = forecastSession(stat({ isPast: false, revenue: 2937, remaining: 22, priceAchAmount: 950 }));
+    expect(fut.maxRemaining).toBe(2937 + 22 * 950);
+    // past: no remaining seats → just the actual revenue
+    const past = forecastSession(stat({ isPast: true, revenue: 5904 }));
+    expect(past.maxRemaining).toBe(5904);
+  });
+
   it("defaults to a 90% fill rate", () => {
     expect(DEFAULT_FILL_RATE).toBe(90);
     const f = forecastSession(stat({ isPast: false, sold: 0, remaining: 10 }));

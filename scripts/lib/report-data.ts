@@ -8,6 +8,7 @@
  */
 import Stripe from "stripe";
 import { stripe, getTicketsSoldByProduct } from "../../netlify/functions/lib/stripe.js";
+import { deriveAttendeeIdentity } from "./report-types.js";
 import type { AttendeeLine, ReportSession } from "./report-types.js";
 
 export type { AttendeeLine, ReportSession };
@@ -119,8 +120,13 @@ export async function buildReport(): Promise<{ sessions: ReportSession[] }> {
       }
     }
 
+    const identity = deriveAttendeeIdentity({
+      metadata: cs.metadata,
+      customerName: cs.customer_details?.name,
+    });
     rs.attendees.push({
-      name: cs.customer_details?.name || "",
+      name: identity.name,
+      company: identity.company,
       email: cs.customer_details?.email || cs.customer_email || "",
       amount: amountDollars,
       paymentMethod: isAch ? "ACH" : "Card",

@@ -29,7 +29,8 @@ export interface SessionStat {
 export const DEFAULT_FILL_RATE = 90;
 
 export interface SessionForecast {
-  maxRevenue: number; // maxSeats * basePrice
+  maxRevenue: number; // maxSeats * basePrice (theoretical ceiling from zero)
+  maxRemaining: number; // actual + every remaining seat sold (past: just actual)
   expected: number; // past: actual revenue; future: (sold + round(remaining*fill%)) * basePrice
   actual: number; // revenue to date
 }
@@ -46,16 +47,20 @@ export function forecastSession(s: SessionStat, fillRate = DEFAULT_FILL_RATE): S
   const maxRevenue = maxSeats * basePrice;
 
   let expected: number;
+  let maxRemaining: number;
   if (s.isPast) {
     expected = actual;
+    maxRemaining = actual; // no remaining seats to sell
   } else {
     const remaining = s.remaining || 0;
     const sold = s.sold || 0;
     const expectedSeats = sold + Math.round(remaining * (fillRate / 100));
     expected = expectedSeats * basePrice;
+    // Best case: keep what's booked and sell every remaining seat.
+    maxRemaining = actual + remaining * basePrice;
   }
 
-  return { maxRevenue, expected, actual };
+  return { maxRevenue, maxRemaining, expected, actual };
 }
 
 export interface ReportTotals {
@@ -68,7 +73,8 @@ export interface ReportTotals {
   refundTotal: number;
   refundCount: number;
   netRevenue: number; // totalRevenue - refundTotal
-  cumMax: number; // Σ maxRevenue
+  cumMax: number; // Σ maxRevenue (every seat from zero)
+  cumMaxRemaining: number; // Σ (actual + every remaining seat) — best case from here
   cumExpected: number; // Σ expected — "Projected Year Total"
   cumActual: number; // Σ actual
 }
@@ -86,6 +92,7 @@ export function computeTotals(sessions: SessionStat[], fillRate = DEFAULT_FILL_R
     refundCount: 0,
     netRevenue: 0,
     cumMax: 0,
+    cumMaxRemaining: 0,
     cumExpected: 0,
     cumActual: 0,
   };
@@ -102,6 +109,7 @@ export function computeTotals(sessions: SessionStat[], fillRate = DEFAULT_FILL_R
 
     const f = forecastSession(s, fillRate);
     t.cumMax += f.maxRevenue;
+    t.cumMaxRemaining += f.maxRemaining;
     t.cumExpected += f.expected;
     t.cumActual += f.actual;
   }

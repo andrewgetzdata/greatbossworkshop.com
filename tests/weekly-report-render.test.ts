@@ -23,7 +23,7 @@ function session(over: Partial<ReportSession>): ReportSession {
     priceAchAmount: 950,
     priceCardAmount: 979,
     attendees: [
-      { name: "Jane Doe", email: "jane@x.com", amount: 950, paymentMethod: "ACH", date: "2026-08-01", status: "paid" },
+      { name: "Jane Doe", company: "Acme Co", email: "jane@x.com", amount: 950, paymentMethod: "ACH", date: "2026-08-01", status: "paid" },
     ],
     ...over,
   };

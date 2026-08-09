@@ -17,6 +17,7 @@ import {
   monthlyCumulative,
   DEFAULT_FILL_RATE,
 } from "../../src/lib/report-forecast.js";
+import { groupedAttendeeLines } from "../../src/lib/attendee-grouping.js";
 
 // EOS brand palette (no gold, no invented hues).
 const NAVY = "#142233";
@@ -262,8 +263,7 @@ function renderCover(doc: Doc, sessions: ReportSession[], generatedOn: string) {
   y = metricTiles(
     doc,
     [
-      { label: "Net Revenue", value: usd(totals.netRevenue), accent: true },
-      { label: "Gross Revenue", value: usd(totals.totalRevenue) },
+      { label: "Revenue", value: usd(totals.netRevenue), accent: true },
       { label: "Seats Sold", value: String(totals.totalSold) },
       { label: "Refunds", value: `-${usd(totals.refundTotal)}` },
     ],
@@ -279,7 +279,7 @@ function renderCover(doc: Doc, sessions: ReportSession[], generatedOn: string) {
     doc,
     [
       { label: `Projected ${currentYear} (at ${DEFAULT_FILL_RATE}% fill)`, value: usd(totals.cumExpected), accent: true },
-      { label: "Maximum if every seat sells", value: usd(totals.cumMax) },
+      { label: "Maximum if every remaining seat sells", value: usd(totals.cumMaxRemaining) },
     ],
     MARGIN,
     y,
@@ -337,26 +337,37 @@ function renderSessionBlock(doc: Doc, s: ReportSession, x: number, y: number, wi
     return;
   }
 
+  // Grouped by company (A→Z), then by name; "Name — Company" per line.
+  const lines = groupedAttendeeLines(paid);
+
   const colCount = 3;
   const colW = width / colCount;
   const lineH = 14;
   const bottom = y + height - 8;
   const rowsPerCol = Math.max(1, Math.floor((bottom - by) / lineH));
   const capacity = rowsPerCol * colCount;
-  const shown = paid.slice(0, capacity);
+  const shown = lines.slice(0, capacity);
 
-  shown.forEach((a, i) => {
+  doc.font(F.regular).fontSize(9);
+  const maxTextW = colW - 12;
+  shown.forEach((line, i) => {
     const col = Math.floor(i / rowsPerCol);
     const row = i % rowsPerCol;
+    // Truncate to fit the column so long "Name — Company" never wraps/overlaps.
+    let label = `•  ${line}`;
+    if (doc.widthOfString(label) > maxTextW) {
+      while (label.length > 3 && doc.widthOfString(label + "…") > maxTextW) {
+        label = label.slice(0, -1);
+      }
+      label += "…";
+    }
     doc
       .fillColor(INK)
-      .font(F.regular)
-      .fontSize(9)
-      .text(`•  ${a.name || "—"}`, x + col * colW, by + row * lineH, { width: colW - 8, lineBreak: false, ellipsis: true });
+      .text(label, x + col * colW, by + row * lineH, { width: colW - 8, lineBreak: false, height: lineH });
   });
 
-  if (paid.length > shown.length) {
-    doc.fillColor(MUTED).font(F.regular).fontSize(8).text(`+ ${paid.length - shown.length} more`, x, by + rowsPerCol * lineH + 2);
+  if (lines.length > shown.length) {
+    doc.fillColor(MUTED).font(F.regular).fontSize(8).text(`+ ${lines.length - shown.length} more`, x, by + rowsPerCol * lineH + 2);
   }
 }
 
