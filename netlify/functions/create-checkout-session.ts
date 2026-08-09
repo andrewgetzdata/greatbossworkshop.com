@@ -1,6 +1,11 @@
 import { stripe, getTicketsSoldForProduct } from "./lib/stripe.js";
+import { resolveSiteUrl } from "../../src/lib/site-url.js";
 
-export async function handler(event: { httpMethod: string; body: string | null }) {
+export async function handler(event: {
+  httpMethod: string;
+  body: string | null;
+  headers?: Record<string, string | undefined>;
+}) {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
   }
@@ -69,7 +74,7 @@ export async function handler(event: { httpMethod: string; body: string | null }
     const mapsUrl = product.metadata.maps_url || "";
     const webinarUrl = product.metadata.webinar_url || "";
 
-    const siteUrl = process.env.PUBLIC_SITE_URL || "https://greatbossworkshop.com";
+    const siteUrl = resolveSiteUrl(event.headers, process.env.PUBLIC_SITE_URL);
 
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
