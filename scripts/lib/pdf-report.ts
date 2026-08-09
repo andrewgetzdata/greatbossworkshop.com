@@ -199,18 +199,28 @@ function sessionTable(doc: Doc, sessions: ReportSession[], x: number, y: number,
     acc += c.w * width;
   }
   const rowH = 19;
+  const bottomLimit = doc.page.height - MARGIN;
 
-  doc.rect(x, y, width, 18).fill(NAVY);
-  cols.forEach((c, i) => {
-    doc.fillColor("white").font(F.semi).fontSize(7.5).text(c.header.toUpperCase(), xs[i] + 6, y + 5, {
-      width: c.w * width - 12,
-      align: c.align,
-      characterSpacing: 0.4,
+  const drawHeader = (hy: number) => {
+    doc.rect(x, hy, width, 18).fill(NAVY);
+    cols.forEach((c, i) => {
+      doc.fillColor("white").font(F.semi).fontSize(7.5).text(c.header.toUpperCase(), xs[i] + 6, hy + 5, {
+        width: c.w * width - 12,
+        align: c.align,
+        characterSpacing: 0.4,
+      });
     });
-  });
-  let ry = y + 18;
+    return hy + 18;
+  };
+
+  let ry = drawHeader(y);
 
   sessions.forEach((s, idx) => {
+    // Paginate: new page + repeat header when a row would overflow.
+    if (ry + rowH > bottomLimit) {
+      doc.addPage();
+      ry = drawHeader(MARGIN);
+    }
     if (idx % 2 === 1) doc.rect(x, ry, width, rowH).fill(BLUE_GRAY);
     const f = forecastSession(s);
     const low = !s.isPast && s.remaining <= 5;
@@ -280,10 +290,14 @@ function renderCover(doc: Doc, sessions: ReportSession[], generatedOn: string) {
   // Revenue YTD — cumulative monthly line
   y = sectionHeading(doc, "Revenue YTD", MARGIN, y) + 10;
   const points = monthlyCumulative(ytd, currentYear, todayMonth);
-  y = ytdLineChart(doc, points, MARGIN, y, pageW, 120) + 14;
+  ytdLineChart(doc, points, MARGIN, y, pageW, 120);
+}
 
-  // Merged session table (most-recent-first)
-  y = sectionHeading(doc, "Sessions", MARGIN, y) + 8;
+/** Dedicated Sessions-table page (most-recent-first), paginating if long. */
+function renderSessionsPage(doc: Doc, sessions: ReportSession[]) {
+  const pageW = doc.page.width - MARGIN * 2;
+  doc.addPage();
+  const y = sectionHeading(doc, "Sessions", MARGIN, MARGIN) + 8;
   const ordered = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
   sessionTable(doc, ordered, MARGIN, y, pageW);
 }
@@ -361,6 +375,9 @@ export function renderPdf(sessions: ReportSession[], generatedOn: string): Promi
   const blockH = (contentBottom - contentTop - blockGap) / 2;
 
   renderCover(doc, sessions, generatedOn);
+
+  // Sessions summary table on its own page (paginates if long).
+  if (sessions.length > 0) renderSessionsPage(doc, sessions);
 
   sessions.forEach((s, i) => {
     const slot = i % 2;
