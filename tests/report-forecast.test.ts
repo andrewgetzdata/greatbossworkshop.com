@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   forecastSession,
   computeTotals,
+  monthlyCumulative,
   DEFAULT_FILL_RATE,
   type SessionStat,
 } from "../src/lib/report-forecast";
@@ -87,5 +88,46 @@ describe("computeTotals", () => {
     const future = stat({ isPast: false, sold: 10, remaining: 30, priceAchAmount: 950 }); // 37*950
     const t = computeTotals([past, future], 90);
     expect(t.cumExpected).toBe(9500 + 37 * 950);
+  });
+});
+
+// monthlyCumulative drives the YTD line chart: months accumulate, past months
+// use actual revenue and future months use the projection, with the actual→
+// projected boundary at todayMonth.
+describe("monthlyCumulative", () => {
+  const year = "2026";
+
+  it("accumulates month over month", () => {
+    const pts = monthlyCumulative(
+      [
+        stat({ date: "2026-03-15", isPast: true, revenue: 1000 }),
+        stat({ date: "2026-05-10", isPast: true, revenue: 2000 }),
+      ],
+      year,
+      12 // treat all as past for this accumulation check
+    );
+    expect(pts).toHaveLength(12);
+    expect(pts[2].cumulative).toBe(1000); // through March
+    expect(pts[4].cumulative).toBe(3000); // through May
+    expect(pts[11].cumulative).toBe(3000); // carries to year end
+  });
+
+  it("flags months after todayMonth as projected", () => {
+    const pts = monthlyCumulative([], year, 8); // August = current
+    expect(pts[7].isProjected).toBe(false); // Aug
+    expect(pts[8].isProjected).toBe(true); // Sep
+  });
+
+  it("uses actual for past months and forecast for future months", () => {
+    const pastMar = stat({ date: "2026-03-01", isPast: true, revenue: 5000 });
+    const futSep = stat({ date: "2026-09-01", isPast: false, sold: 10, remaining: 30, priceAchAmount: 950 });
+    const pts = monthlyCumulative([pastMar, futSep], year, 8);
+    // Sep future contributes 37*950 on top of March's 5000
+    expect(pts[8].cumulative).toBe(5000 + 37 * 950);
+  });
+
+  it("ignores sessions from other years", () => {
+    const pts = monthlyCumulative([stat({ date: "2025-06-01", isPast: true, revenue: 9999 })], year, 8);
+    expect(pts[11].cumulative).toBe(0);
   });
 });

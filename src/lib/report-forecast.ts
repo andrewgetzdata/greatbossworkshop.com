@@ -109,3 +109,47 @@ export function computeTotals(sessions: SessionStat[], fillRate = DEFAULT_FILL_R
   t.netRevenue = t.totalRevenue - t.refundTotal;
   return t;
 }
+
+/** One month's cumulative revenue point for the YTD line chart. */
+export interface MonthlyPoint {
+  month: number; // 1-12
+  label: string; // "Jan" … "Dec"
+  cumulative: number; // running total through this month
+  isProjected: boolean; // true once the month is in the future
+}
+
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/**
+ * Cumulative monthly revenue for a year: each session contributes to its
+ * month (past → actual revenue, future → projected via forecastSession), then
+ * months accumulate. A month is "projected" once it is after the current month
+ * (todayMonth, 1-12) — that's where the chart switches from actual to forecast.
+ */
+export function monthlyCumulative(
+  sessions: SessionStat[],
+  year: string,
+  todayMonth: number,
+  fillRate = DEFAULT_FILL_RATE
+): MonthlyPoint[] {
+  const perMonth = new Array(12).fill(0);
+  for (const s of sessions) {
+    if (!s.date.startsWith(year)) continue;
+    const m = parseInt(s.date.slice(5, 7), 10); // 1-12
+    if (m < 1 || m > 12) continue;
+    perMonth[m - 1] += forecastSession(s, fillRate).expected;
+  }
+
+  const points: MonthlyPoint[] = [];
+  let running = 0;
+  for (let m = 1; m <= 12; m++) {
+    running += perMonth[m - 1];
+    points.push({
+      month: m,
+      label: MONTH_LABELS[m - 1],
+      cumulative: running,
+      isProjected: m > todayMonth,
+    });
+  }
+  return points;
+}
