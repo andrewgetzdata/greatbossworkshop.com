@@ -1,4 +1,4 @@
-name: Export archived-event attendees
+name: Export past-event attendees
 
 on:
   schedule:
@@ -18,7 +18,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Export new archived events
+      - name: Export new past events
         env:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
