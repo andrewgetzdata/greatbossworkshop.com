@@ -90,6 +90,64 @@ const inclusions = [
       Secure payment powered by Stripe. Full refund available 14+ days before the workshop.
     </p>
   </div>
+
+  <!-- Registration modal: collects EOS attendee fields before Stripe checkout -->
+  <div id="reg-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="reg-title">
+    <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 text-gray-900 shadow-2xl sm:p-8">
+      <div class="mb-5 flex items-start justify-between">
+        <div>
+          <h3 id="reg-title" class="text-xl font-bold text-eos-dark">Attendee details</h3>
+          <p class="mt-1 text-sm text-gray-500">A few details EOS needs to register you. Payment is next.</p>
+        </div>
+        <button type="button" id="reg-close" aria-label="Close" class="ml-4 text-2xl leading-none text-gray-400 hover:text-gray-600">&times;</button>
+      </div>
+
+      <form id="reg-form" class="space-y-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label class="block text-sm font-medium text-gray-700">First name*
+            <input name="firstName" required class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-eos-orange focus:outline-none" />
+          </label>
+          <label class="block text-sm font-medium text-gray-700">Last name*
+            <input name="lastName" required class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-eos-orange focus:outline-none" />
+          </label>
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label class="block text-sm font-medium text-gray-700">Company*
+            <input name="company" required class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-eos-orange focus:outline-none" />
+          </label>
+          <label class="block text-sm font-medium text-gray-700">Job title*
+            <input name="jobTitle" required class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-eos-orange focus:outline-none" />
+          </label>
+        </div>
+        <label class="block text-sm font-medium text-gray-700">Please describe your role*
+          <textarea name="roleDesc" required rows="2" maxlength="480" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-eos-orange focus:outline-none"></textarea>
+        </label>
+
+        <fieldset class="rounded-lg border border-gray-200 p-3">
+          <legend class="px-1 text-sm font-medium text-gray-700">Are you working with an EOS Implementer?*</legend>
+          <div class="mt-1 flex gap-6">
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="radio" name="hasImplementer" value="yes" class="accent-eos-orange" /> Yes
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="radio" name="hasImplementer" value="no" class="accent-eos-orange" /> No
+            </label>
+          </div>
+          <label id="reg-implementer-name" class="mt-3 hidden text-sm font-medium text-gray-700">Your Implementer's name
+            <input name="implementerName" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-eos-orange focus:outline-none" />
+          </label>
+          <label id="reg-learn-more" class="mt-3 hidden items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" name="wantsMoreInfo" value="yes" class="accent-eos-orange" /> I'd like to learn more about running my business on EOS
+          </label>
+        </fieldset>
+
+        <p id="reg-error" class="hidden text-sm text-red-600"></p>
+        <button type="submit" id="reg-submit" class="w-full rounded-xl bg-eos-orange px-6 py-3 text-center font-bold text-white transition hover:bg-eos-orange-light">
+          Continue to payment &rarr;
+        </button>
+      </form>
+    </div>
+  </div>
 </section>
 
 <script is:inline>
@@ -265,49 +323,112 @@ const inclusions = [
     if (hint) hint.style.display = 'none';
   }
 
-  // Checkout click handler
+  // Checkout button opens the registration modal (payment happens after the form).
+  var pendingMethod = null;
+
   document.querySelectorAll('[data-checkout]').forEach(function(btn) {
-    btn.addEventListener('click', async function() {
+    btn.addEventListener('click', function() {
       if (!selectedProductId) {
         alert('Please select a workshop date first.');
         return;
       }
-
-      var method = btn.getAttribute('data-checkout');
-      var originalText = btn.textContent;
-      btn.textContent = 'Redirecting...';
-      btn.disabled = true;
-
-      if (window.posthog) {
-        window.posthog.capture('checkout_started', {
-          method: method,
-          product_id: selectedProductId,
-        });
-      }
-
-      try {
-        var res = await fetch('/api/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            paymentMethod: method,
-            productId: selectedProductId,
-          }),
-        });
-        var data = await res.json();
-
-        if (res.status === 409) {
-          btn.textContent = 'Sold Out';
-          alert('Sorry, this session is sold out! Please select a different date.');
-          return;
-        }
-        if (!res.ok) throw new Error(data.error || 'Failed');
-        window.location.href = data.url;
-      } catch (e) {
-        btn.textContent = originalText;
-        btn.disabled = false;
-        alert('Something went wrong. Please try again or contact us for assistance.');
-      }
+      pendingMethod = btn.getAttribute('data-checkout');
+      openRegModal();
     });
+  });
+
+  var regModal = document.getElementById('reg-modal');
+  var regForm = document.getElementById('reg-form');
+  var regError = document.getElementById('reg-error');
+  var regSubmit = document.getElementById('reg-submit');
+
+  function openRegModal() {
+    regModal.classList.remove('hidden');
+    regModal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeRegModal() {
+    regModal.classList.add('hidden');
+    regModal.classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('reg-close').addEventListener('click', closeRegModal);
+  regModal.addEventListener('click', function(e) {
+    if (e.target === regModal) closeRegModal();
+  });
+
+  // Show the branch field matching the implementer yes/no answer.
+  regForm.querySelectorAll('input[name="hasImplementer"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      var yes = regForm.querySelector('input[name="hasImplementer"]:checked').value === 'yes';
+      document.getElementById('reg-implementer-name').classList.toggle('hidden', !yes);
+      var learnMore = document.getElementById('reg-learn-more');
+      learnMore.classList.toggle('hidden', yes);
+      learnMore.classList.toggle('flex', !yes);
+    });
+  });
+
+  regForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    regError.classList.add('hidden');
+
+    var fd = new FormData(regForm);
+    var implementerChoice = regForm.querySelector('input[name="hasImplementer"]:checked');
+    if (!implementerChoice) {
+      regError.textContent = 'Please tell us whether you work with an EOS Implementer.';
+      regError.classList.remove('hidden');
+      return;
+    }
+
+    var attendee = {
+      firstName: fd.get('firstName'),
+      lastName: fd.get('lastName'),
+      company: fd.get('company'),
+      jobTitle: fd.get('jobTitle'),
+      roleDesc: fd.get('roleDesc'),
+      hasImplementer: implementerChoice.value,
+      implementerName: fd.get('implementerName') || '',
+      wantsMoreInfo: fd.get('wantsMoreInfo') ? 'yes' : 'no',
+    };
+
+    var originalText = regSubmit.textContent;
+    regSubmit.textContent = 'Redirecting...';
+    regSubmit.disabled = true;
+
+    if (window.posthog) {
+      window.posthog.capture('checkout_started', {
+        method: pendingMethod,
+        product_id: selectedProductId,
+      });
+    }
+
+    try {
+      var res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: pendingMethod,
+          productId: selectedProductId,
+          attendee: attendee,
+        }),
+      });
+      var data = await res.json();
+
+      if (res.status === 409) {
+        regError.textContent = 'Sorry, this session just sold out. Please choose another date.';
+        regError.classList.remove('hidden');
+        regSubmit.textContent = originalText;
+        regSubmit.disabled = false;
+        return;
+      }
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      window.location.href = data.url;
+    } catch (err) {
+      regError.textContent = 'Something went wrong. Please try again or contact us for assistance.';
+      regError.classList.remove('hidden');
+      regSubmit.textContent = originalText;
+      regSubmit.disabled = false;
+    }
   });
 </script>
