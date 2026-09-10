@@ -84,6 +84,9 @@ Site runs at `http://localhost:8888`.
 | `PUBLIC_SITE_URL` | Yes | Site URL for redirects |
 | `RESEND_API_KEY` | Yes | Resend email API key |
 | `EMAIL_FROM` | Yes | Sender address (must match verified Resend domain) |
+| `EMAIL_REPLY_TO` | No | Reply-to address on outgoing email |
+| `CALENDAR_ORGANIZER_EMAIL` | No | Organizer on the calendar invite; receives RSVP replies (default: `EMAIL_FROM` address) |
+| `CALENDAR_ORGANIZER_NAME` | No | Organizer display name (default: instructor name from `workshop.json`) |
 | `PUBLIC_POSTHOG_KEY` | No | PostHog analytics key |
 | `PUBLIC_POSTHOG_HOST` | No | PostHog API host |
 

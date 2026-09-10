@@ -3,6 +3,49 @@ import workshop from "../../../src/data/workshop.json";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const DEFAULT_FROM = "Great Boss Workshop <workshop@greatbossworkshop.com>";
+
+function emailFrom(): string {
+  return process.env.EMAIL_FROM || DEFAULT_FROM;
+}
+
+// "Name <addr@example.com>" -> "addr@example.com"
+function bareAddress(from: string): string {
+  const match = from.match(/<([^>]+)>/);
+  return (match ? match[1] : from).trim();
+}
+
+// RFC 5545 §3.1: content lines are folded at 75 octets, continuations start with a space.
+function foldLine(line: string): string {
+  const bytes = Buffer.from(line, "utf-8");
+  if (bytes.length <= 75) return line;
+
+  const chunks: string[] = [];
+  let start = 0;
+  let limit = 75;
+  while (start < bytes.length) {
+    let end = Math.min(start + limit, bytes.length);
+    // Never split a multi-byte UTF-8 sequence across a fold.
+    while (end > start && end < bytes.length && (bytes[end] & 0xc0) === 0x80) end--;
+    chunks.push(bytes.subarray(start, end).toString("utf-8"));
+    start = end;
+    limit = 74; // continuation lines spend one octet on the leading space
+  }
+  return chunks.join("\r\n ");
+}
+
+// Escape a TEXT value (RFC 5545 §3.3.11).
+function escText(s: string): string {
+  return s.replace(/[,;\\]/g, (m) => `\\${m}`).replace(/\r?\n/g, "\\n");
+}
+
+// CN is a quoted param value; double quotes are not representable inside one.
+function escCN(s: string): string {
+  return s.replace(/["\\]/g, "").replace(/[\r\n]+/g, " ").trim();
+}
+
+type Person = { name?: string | null; email: string };
+
 function generateICS(options: {
   date: string;
   title: string;
@@ -13,6 +56,10 @@ function generateICS(options: {
   startMin: number;
   endHour: number;
   endMin: number;
+  method: "REQUEST" | "PUBLISH";
+  organizer: Person;
+  attendee?: Person;
+  sequence?: number;
 }): string {
   // Parse the ISO date (e.g. "2026-04-15")
   const [year, month, day] = options.date.split("-");
@@ -23,38 +70,18 @@ function generateICS(options: {
   const now = new Date();
   const dtStamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
 
-  // Escape special characters for ICS
-  const esc = (s: string) => s.replace(/[,;\\]/g, (m) => `\\${m}`).replace(/\n/g, "\\n");
+  const person = (prop: string, p: Person, params: string[] = []) => {
+    const all = [...(p.name ? [`CN="${escCN(p.name)}"`] : []), ...params];
+    return `${prop}${all.length ? ";" + all.join(";") : ""}:mailto:${p.email}`;
+  };
 
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Great Boss Workshop//EN",
     "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    "BEGIN:VEVENT",
-    `DTSTART;TZID=America/New_York:${dtStart}`,
-    `DTEND;TZID=America/New_York:${dtEnd}`,
-    `DTSTAMP:${dtStamp}`,
-    `UID:${options.date}-workshop@greatbossworkshop.com`,
-    `SUMMARY:${esc(options.title)}`,
-    `DESCRIPTION:${esc(options.description)}`,
-    `LOCATION:${esc(options.location)}`,
-  ];
-
-  if (options.url) {
-    lines.push(`URL:${options.url}`);
-  }
-
-  lines.push(
-    "STATUS:CONFIRMED",
-    "BEGIN:VALARM",
-    "TRIGGER:-P1D",
-    "ACTION:DISPLAY",
-    "DESCRIPTION:Great Boss Workshop tomorrow",
-    "END:VALARM",
-    "END:VEVENT",
-    // Timezone definition for America/New_York
+    `METHOD:${options.method}`,
+    // VTIMEZONE precedes the VEVENT that references it — Outlook is order-sensitive.
     "BEGIN:VTIMEZONE",
     "TZID:America/New_York",
     "BEGIN:STANDARD",
@@ -72,10 +99,48 @@ function generateICS(options: {
     "TZNAME:EDT",
     "END:DAYLIGHT",
     "END:VTIMEZONE",
+    "BEGIN:VEVENT",
+    `DTSTART;TZID=America/New_York:${dtStart}`,
+    `DTEND;TZID=America/New_York:${dtEnd}`,
+    `DTSTAMP:${dtStamp}`,
+    // Shared UID: every attendee holds one copy of the same event, so a later
+    // REQUEST or CANCEL with a higher SEQUENCE updates everyone's calendar.
+    `UID:${options.date}-workshop@greatbossworkshop.com`,
+    `SEQUENCE:${options.sequence ?? 0}`,
+    `SUMMARY:${escText(options.title)}`,
+    `DESCRIPTION:${escText(options.description)}`,
+    `LOCATION:${escText(options.location)}`,
+    person("ORGANIZER", options.organizer),
+  ];
+
+  if (options.attendee) {
+    lines.push(
+      person("ATTENDEE", options.attendee, [
+        "CUTYPE=INDIVIDUAL",
+        "ROLE=REQ-PARTICIPANT",
+        "PARTSTAT=NEEDS-ACTION",
+        "RSVP=TRUE",
+      ]),
+    );
+  }
+
+  if (options.url) {
+    lines.push(`URL:${options.url}`);
+  }
+
+  lines.push(
+    "STATUS:CONFIRMED",
+    "TRANSP:OPAQUE",
+    "BEGIN:VALARM",
+    "TRIGGER:-P1D",
+    "ACTION:DISPLAY",
+    "DESCRIPTION:Great Boss Workshop tomorrow",
+    "END:VALARM",
+    "END:VEVENT",
     "END:VCALENDAR",
   );
 
-  return lines.join("\r\n");
+  return lines.map(foldLine).join("\r\n");
 }
 
 export async function sendConfirmationEmail(session: {
@@ -121,8 +186,12 @@ export async function sendConfirmationEmail(session: {
     }
   }
 
-  // Generate .ics calendar attachment if we have a date
-  const attachments: Array<{ filename: string; content: Buffer }> = [];
+  // Generate the calendar invite if we have a date
+  const attachments: Array<{
+    filename: string;
+    content: Buffer;
+    contentType?: string;
+  }> = [];
   if (session.sessionDate) {
     const icsLocation = isOnline
       ? session.webinarUrl || "Online"
@@ -138,16 +207,27 @@ export async function sendConfirmationEmail(session: {
       startMin: 0,
       endHour: 16,
       endMin: 0,
+      method: "REQUEST",
+      organizer: {
+        name: process.env.CALENDAR_ORGANIZER_NAME || workshop.instructor.name,
+        // RSVP replies are delivered here, so it must be a mailbox someone reads.
+        email:
+          process.env.CALENDAR_ORGANIZER_EMAIL || bareAddress(emailFrom()),
+      },
+      attendee: { name: session.customer_details?.name, email },
     });
 
     attachments.push({
       filename: "great-boss-workshop.ics",
       content: Buffer.from(icsContent, "utf-8"),
+      // The method parameter is what makes mail clients render RSVP controls
+      // instead of treating this as a plain file download.
+      contentType: 'text/calendar; charset=utf-8; method=REQUEST',
     });
   }
 
   await resend.emails.send({
-    from: process.env.EMAIL_FROM || "Great Boss Workshop <workshop@greatbossworkshop.com>",
+    from: emailFrom(),
     replyTo: process.env.EMAIL_REPLY_TO || undefined,
     to: email,
     subject: `You're registered for the ${workshop.title} on ${dateDisplay}!`,
@@ -199,8 +279,8 @@ export async function sendConfirmationEmail(session: {
     <ol style="margin:0;padding:0 0 0 20px;font-size:15px;line-height:1.8;">
       <li style="margin-bottom:8px;"><strong>Check your email</strong> for a payment receipt from Stripe.</li>
       <li style="margin-bottom:8px;">${isOnline
-        ? "<strong>Join link</strong> — you'll receive the webinar link before the workshop."
-        : "<strong>Add to calendar</strong> — open the attached .ics file to add this workshop to your calendar."
+        ? "<strong>RSVP</strong> — accept the attached calendar invite; the webinar link follows before the workshop."
+        : "<strong>RSVP</strong> — accept the attached calendar invite to confirm your seat and add it to your calendar."
       }</li>
       <li><strong>Come ready to learn</strong> — bring an open mind.${isOnline ? "" : " All materials, workbooks, and lunch are provided."}</li>
     </ol>

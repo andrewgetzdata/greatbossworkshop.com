@@ -137,6 +137,8 @@ stripe prices create -d "product=prod_xxx" -d "unit_amount=97900" -d "currency=u
 | `PUBLIC_SITE_URL` | Your site URL | `https://greatbossworkshop.com` |
 | `RESEND_API_KEY` | Your Resend API key | `re_abc123...` |
 | `EMAIL_FROM` | Sender address (verified domain) | `Great Boss Workshop <workshop@greatbossworkshop.com>` |
+| `CALENDAR_ORGANIZER_EMAIL` | Calendar invite organizer; receives RSVP replies (optional) | `workshop@greatbossworkshop.com` |
+| `CALENDAR_ORGANIZER_NAME` | Organizer display name (optional) | `Roy Getz` |
 | `PUBLIC_POSTHOG_KEY` | PostHog project API key (optional) | `phc_abc123` |
 
 > Note: Price IDs are **not** configured as env vars — they are automatically discovered from the Stripe product.
