@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { stripe } from "./lib/stripe.js";
 import { sendConfirmationEmail } from "./lib/email.js";
+import { sendPurchaseToGhl } from "./lib/ghl.js";
 
 export async function handler(event: {
   httpMethod: string;
@@ -55,6 +56,8 @@ export async function handler(event: {
         mapsUrl: session.metadata?.workshop_maps_url,
         webinarUrl: session.metadata?.workshop_webinar_url,
       });
+
+      await sendPurchaseToGhl(session);
       break;
     }
 
