@@ -176,7 +176,14 @@ Verify the webhook processes events and sends confirmation emails.
 
 #### 7. Admin Dashboard
 
-Verify the admin page shows attendee data.
+The sidebar and attendee table read one class-status document from Netlify Blobs. They do not list Stripe Checkout Sessions. The document is rebuilt in the background when a checkout completes, a charge is refunded, or a product is created or updated. Before the first sale after deploy, fill the document once:
+
+```bash
+curl -X POST "http://localhost:8888/api/rebuild-class-status-background" \
+  -H "x-admin-key: $ADMIN_API_KEY"
+```
+
+The response is `202` immediately, which only means Netlify started the function. Wait until the function log says `Class status rebuilt`, then refresh `/admin`. A wrong admin key fails in that log and does not fill the document.
 
 1. Go to `http://localhost:8888/admin`
 2. Enter the `ADMIN_API_KEY` value as the password

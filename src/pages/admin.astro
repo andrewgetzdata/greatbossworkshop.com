@@ -94,6 +94,20 @@ import workshop from "../data/workshop.json";
       if (e.key === 'Enter') login();
     });
 
+    function revealDashboard() {
+      document.getElementById('login-form').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+    }
+
+    function failLogin(btn, originalText) {
+      adminKey = null;
+      sessionStorage.removeItem('admin_key');
+      document.getElementById('login-error').style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = originalText;
+      btn.style.opacity = '1';
+    }
+
     function login() {
       var pw = document.getElementById('password').value;
       if (!pw) return;
@@ -103,25 +117,8 @@ import workshop from "../data/workshop.json";
       btn.textContent = 'Signing in...';
       btn.style.opacity = '0.7';
       document.getElementById('login-error').style.display = 'none';
-      fetch('/api/attendees?key=' + encodeURIComponent(pw))
-        .then(function(res) {
-          if (res.status === 401) {
-            document.getElementById('login-error').style.display = 'block';
-            btn.disabled = false;
-            btn.textContent = originalText;
-            btn.style.opacity = '1';
-            return;
-          }
-          sessionStorage.setItem('admin_key', pw);
-          adminKey = pw;
-          showDashboard();
-        })
-        .catch(function() {
-          document.getElementById('login-error').style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = originalText;
-          btn.style.opacity = '1';
-        });
+      adminKey = pw;
+      return loadSessions({ fromLogin: true, btn: btn, originalText: originalText });
     }
 
     function logout() {
@@ -130,18 +127,38 @@ import workshop from "../data/workshop.json";
     }
 
     function showDashboard() {
-      document.getElementById('login-form').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      loadSessions();
+      revealDashboard();
+      return loadSessions();
     }
 
-    async function loadSessions() {
+    async function loadSessions(opts) {
+      opts = opts || {};
       var list = document.getElementById('session-list');
       try {
         var res = await fetch('/api/attendees?key=' + encodeURIComponent(adminKey));
-        if (res.status === 401) { logout(); return; }
+        if (res.status === 401) {
+          if (opts.fromLogin) {
+            failLogin(opts.btn, opts.originalText);
+            return;
+          }
+          logout();
+          return;
+        }
+        if (!res.ok) throw new Error('attendees request failed');
         var data = await res.json();
+        if (opts.fromLogin) {
+          sessionStorage.setItem('admin_key', adminKey);
+          revealDashboard();
+          opts.btn.disabled = false;
+          opts.btn.textContent = opts.originalText;
+          opts.btn.style.opacity = '1';
+        }
         sessionsData = data.sessions || [];
+
+        if (data.ready === false) {
+          list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">Class status isn\'t ready yet. Run the one-time backfill, then refresh.</p>';
+          return;
+        }
 
         if (sessionsData.length === 0) {
           list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">No upcoming sessions.</p>';
@@ -192,6 +209,10 @@ import workshop from "../data/workshop.json";
           list.appendChild(card);
         });
       } catch (e) {
+        if (opts.fromLogin) {
+          failLogin(opts.btn, opts.originalText);
+          return;
+        }
         list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">Failed to load sessions.</p>';
       }
     }
@@ -649,7 +670,16 @@ import workshop from "../data/workshop.json";
       try {
         var res = await fetch('/api/attendees?key=' + encodeURIComponent(adminKey) + '&product=' + productId);
         if (res.status === 401) { logout(); return; }
+        if (!res.ok) {
+          tableEl.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:48px 0;font-size:14px;">Failed to load attendees.</p>';
+          return;
+        }
         var data = await res.json();
+        if (data.ready === false) {
+          tableEl.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:48px 0;font-size:14px;">Class status isn\'t ready yet. Run the one-time backfill, then refresh.</p>';
+          document.getElementById('export-btn').style.display = 'none';
+          return;
+        }
         currentAttendees = data.attendees || [];
 
         if (currentAttendees.length === 0) {
