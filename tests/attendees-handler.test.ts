@@ -70,9 +70,11 @@ describe("attendees handler reads the blob", () => {
     const list = await handleAttendeesRequest(request({ key: "secret" }), deps);
     const body = JSON.parse(list.body);
     expect(body.ready).toBe(true);
-    expect(body.sessions).toHaveLength(1);
-    expect(body.sessions[0].productId).toBe("prod_june");
-    expect(body.sessions[0].sold).toBe(1);
+    expect(body.sessions.map((session: { productId: string }) => session.productId)).toEqual([
+      "prod_past",
+      "prod_june",
+    ]);
+    expect(body.sessions[1].sold).toBe(1);
 
     const detail = await handleAttendeesRequest(request({ key: "secret", product: "prod_june" }), deps);
     const attendees = JSON.parse(detail.body);

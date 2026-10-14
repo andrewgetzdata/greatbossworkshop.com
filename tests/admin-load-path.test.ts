@@ -19,6 +19,9 @@ type FakeEl = {
   attrs: Record<string, string>;
   classList: { add: () => void; remove: () => void; contains: () => boolean };
   addEventListener: (type: string, fn: (event: { key: string }) => void) => void;
+  click: () => void;
+  querySelectorAll: (selector: string) => FakeEl[];
+  getAttribute: (name: string) => string | null;
   setAttribute: (name: string, value: string) => void;
   appendChild: (child: FakeEl) => FakeEl;
 };
@@ -35,6 +38,22 @@ function createEl(id = ""): FakeEl {
     attrs: {},
     classList: { add() {}, remove() {}, contains: () => false },
     addEventListener() {},
+    click() {},
+    querySelectorAll(selector: string) {
+      if (selector !== "[data-refund]") return [];
+      const found: FakeEl[] = [];
+      const html = this.innerHTML || "";
+      for (const match of html.matchAll(/data-refund="([^"]+)"/g)) {
+        const btn = createEl();
+        btn.attrs["data-refund"] = match[1];
+        btn.getAttribute = (name: string) => btn.attrs[name] ?? null;
+        found.push(btn);
+      }
+      return found;
+    },
+    getAttribute(name: string) {
+      return this.attrs[name] ?? null;
+    },
     setAttribute(name, value) {
       this.attrs[name] = value;
     },
@@ -66,6 +85,8 @@ function boot(options: { adminKey?: string } = {}) {
   const elements = new Map<string, FakeEl>();
   const ids = [
     "password",
+    "annual-year",
+    "annual-btn",
     "login-error",
     "login-form",
     "dashboard",
@@ -87,8 +108,17 @@ function boot(options: { adminKey?: string } = {}) {
   if (options.adminKey) storage.set("admin_key", options.adminKey);
 
   const fetches: string[] = [];
+  const bodies: Array<string | undefined> = [];
+  const confirms: string[] = [];
+  let allowRefund = false;
   const pending: Array<{
-    resolve: (value: { status: number; ok: boolean; json: () => Promise<unknown> }) => void;
+    resolve: (value: {
+      status: number;
+      ok: boolean;
+      headers: { get: (name: string) => string | null };
+      json: () => Promise<unknown>;
+      text: () => Promise<string>;
+    }) => void;
   }> = [];
 
   const document = {
@@ -122,9 +152,16 @@ function boot(options: { adminKey?: string } = {}) {
     },
   };
 
-  function fetch(url: string) {
+  function fetch(url: string, init?: { body?: string }) {
     fetches.push(String(url));
-    return new Promise<{ status: number; ok: boolean; json: () => Promise<unknown> }>((resolve) => {
+    bodies.push(init?.body);
+    return new Promise<{
+      status: number;
+      ok: boolean;
+      headers: { get: (name: string) => string | null };
+      json: () => Promise<unknown>;
+      text: () => Promise<string>;
+    }>((resolve) => {
       pending.push({ resolve });
     });
   }
@@ -137,14 +174,49 @@ function boot(options: { adminKey?: string } = {}) {
     "Chart",
     "URL",
     "Blob",
-    `${loadAdminScript()}\nreturn { login: login, showDashboard: showDashboard, loadSessions: loadSessions, selectSession: selectSession };`,
-  )(document, sessionStorage, fetch, { reload() {} }, function Chart() {}, URL, Blob);
+    "confirm",
+    `${loadAdminScript()}\nreturn { login: login, showDashboard: showDashboard, loadSessions: loadSessions, selectSession: selectSession, exportCSV: exportCSV, downloadAnnual: downloadAnnual, refundAttendee: refundAttendee };`,
+  )(
+    document,
+    sessionStorage,
+    fetch,
+    { reload() {} },
+    function Chart() {},
+    { createObjectURL() { return "blob:csv"; }, revokeObjectURL() {} },
+    Blob,
+    (message: string) => {
+      confirms.push(message);
+      return allowRefund;
+    },
+  );
 
-  return { api, elements, button, fetches, pending, storage };
+  return {
+    api,
+    elements,
+    button,
+    fetches,
+    bodies,
+    confirms,
+    pending,
+    storage,
+    setAllowRefund(value: boolean) {
+      allowRefund = value;
+    },
+  };
 }
 
-function jsonResponse(status: number, body: unknown) {
-  return { status, ok: status >= 200 && status < 300, json: async () => body };
+function jsonResponse(status: number, body: unknown, headers: Record<string, string> = {}) {
+  return {
+    status,
+    ok: status >= 200 && status < 300,
+    headers: {
+      get(name: string) {
+        return headers[name.toLowerCase()] ?? null;
+      },
+    },
+    json: async () => body,
+    text: async () => (typeof body === "string" ? body : JSON.stringify(body)),
+  };
 }
 
 const session = {
@@ -250,5 +322,73 @@ describe("admin sign-in load path", () => {
     await detail;
     expect(page.fetches).toHaveLength(2);
     expect(page.elements.get("attendee-table")!.innerHTML).toContain("Ada Lovelace");
+  });
+
+  it("does not call Stripe until the refund is confirmed", async () => {
+    const page = boot();
+    page.elements.get("password")!.value = "secret";
+    const done = page.api.login();
+    await Promise.resolve();
+    page.pending[0].resolve(jsonResponse(200, { ready: true, sessions: [session] }));
+    await done;
+
+    const declined = page.api.refundAttendee({
+      status: "paid",
+      checkoutSessionId: "cs_test_1",
+      name: "Ada Lovelace",
+      amount: "$950.00",
+    });
+    await declined;
+    expect(page.confirms[0]).toContain("full remaining amount");
+    expect(page.fetches).toHaveLength(1);
+
+    page.setAllowRefund(true);
+    const accepted = page.api.refundAttendee({
+      status: "paid",
+      checkoutSessionId: "cs_test_1",
+      name: "Ada Lovelace",
+      amount: "$950.00",
+    });
+    await Promise.resolve();
+    expect(page.fetches).toHaveLength(2);
+    expect(page.fetches[1]).toBe("/api/refund-attendee?key=secret");
+    expect(page.bodies[1]).toBe(JSON.stringify({ checkoutSessionId: "cs_test_1" }));
+    expect(page.bodies[1]).not.toContain("amount");
+    page.pending[1].resolve(jsonResponse(200, { ok: true, alreadyRefunded: false, refreshed: true }));
+    await accepted;
+  });
+
+  it("downloads one class CSV and the annual report from the blob endpoints", async () => {
+    const page = boot();
+    page.elements.get("password")!.value = "secret";
+    const done = page.api.login();
+    await Promise.resolve();
+    page.pending[0].resolve(jsonResponse(200, { ready: true, sessions: [session] }));
+    await done;
+    page.api.selectSession("prod_june");
+    await Promise.resolve();
+    page.pending[1].resolve(jsonResponse(200, { ready: true, attendees: [] }));
+    await Promise.resolve();
+
+    const exporting = page.api.exportCSV();
+    await Promise.resolve();
+    expect(page.fetches[2]).toBe("/api/attendees?key=secret&product=prod_june&format=csv");
+    page.pending[2].resolve(
+      jsonResponse(200, "Class,Email\r\n", {
+        "content-type": "text/csv; charset=utf-8",
+        "content-disposition": 'attachment; filename="attendees-2026-06-23-prod_june.csv"',
+      }),
+    );
+    await exporting;
+
+    page.elements.get("annual-year")!.value = "2026";
+    const annual = page.api.downloadAnnual();
+    await Promise.resolve();
+    expect(page.fetches[3]).toBe("/api/attendees?key=secret&format=annual&year=2026");
+    page.pending[3].resolve(
+      jsonResponse(200, "Class,Date\r\n", { "content-type": "text/csv; charset=utf-8" }),
+    );
+    await annual;
+    expect(page.fetches).toHaveLength(4);
   });
 });

@@ -165,7 +165,7 @@ describe("admin reads of the class-status document", () => {
     "2026-05-02T00:00:00.000Z",
   );
 
-  it("hides past sessions from the sidebar and reports a missing document", () => {
+  it("lists every class, including past ones, and reports a missing document", () => {
     expect(toAdminSessionList(null, "2026-05-02")).toEqual({ ready: false, sessions: [] });
     expect(toAdminSessionList({ generatedAt: "x" } as never, "2026-05-02")).toEqual({
       ready: false,
@@ -174,7 +174,9 @@ describe("admin reads of the class-status document", () => {
 
     const list = toAdminSessionList(doc, "2026-05-02");
     expect(list.ready).toBe(true);
-    expect(list.sessions.map((session) => session.productId)).toEqual(["prod_june"]);
+    expect(list.sessions.map((session) => session.productId)).toEqual(["prod_past", "prod_june"]);
+    expect(list.sessions[0].isPast).toBe(true);
+    expect(list.sessions[1].isPast).toBe(false);
     expect(list.sessions[0]).not.toHaveProperty("attendees");
   });
 

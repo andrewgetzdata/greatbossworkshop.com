@@ -188,9 +188,11 @@ The response is `202` immediately, which only means Netlify started the function
 1. Go to `http://localhost:8888/admin`
 2. Enter the `ADMIN_API_KEY` value as the password
 3. Session cards should appear in the sidebar with date, location, and seat counts
-4. Click a session — attendee table should load with name, email, amount, method, date, status
-5. Click **Export CSV** — should download a CSV file with attendee data
-6. Click **Sign out** — should return to login screen
+4. Click a session — attendee table should load with name, email, amount, method, date, status. Past classes are listed too.
+5. Click **Export CSV** — downloads that class's attendees with the stored checkout fields (any class, not only past events)
+6. Click **Refund** on a paid row and confirm — refunds the full remaining amount in Stripe and refreshes the row
+7. Choose a year and click **Annual report** — downloads full-sellout revenue, actual revenue, and the gap
+8. Click **Sign out** — should return to login screen
 
 #### 8. Grid Fill (Coming Soon Placeholders)
 

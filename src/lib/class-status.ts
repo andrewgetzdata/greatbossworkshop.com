@@ -7,12 +7,29 @@ import { seatsRemaining } from "./pricing.js";
 import { isSeatOccupied } from "./seat-counting.js";
 
 export interface ClassStatusAttendee {
+  /** Checkout Session id. The refund call retrieves this from Stripe; it is not a PaymentIntent id. */
+  checkoutSessionId: string;
   name: string | null;
   email: string | null;
   amount: string;
   paymentMethod: "ACH" | "Card";
+  /** Purchase date, YYYY-MM-DD. */
   date: string;
   status: "paid" | "canceled" | "refunded";
+  firstName: string;
+  lastName: string;
+  company: string;
+  jobTitle: string;
+  phone: string;
+  address1: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  hasImplementer: string;
+  implementerName: string;
+  wantsMoreInfo: string;
+  roleDesc: string;
 }
 
 export interface ClassStatusSession {
@@ -60,6 +77,22 @@ export interface ClassStatusCheckoutInput {
   customerEmail: string | null;
   /** Checkout Session created, unix seconds. */
   created: number;
+  /** Checkout Session id, used to refund this purchase. */
+  checkoutSessionId?: string;
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  jobTitle?: string;
+  phone?: string;
+  address1?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  hasImplementer?: string;
+  implementerName?: string;
+  wantsMoreInfo?: string;
+  roleDesc?: string;
 }
 
 export interface AdminSessionSummary {
@@ -74,6 +107,7 @@ export interface AdminSessionSummary {
   cardCount: number;
   revenue: number;
   priceAchAmount: number | null;
+  isPast: boolean;
 }
 
 export function isAchPayment(paymentMethodTypes: string[]): boolean {
@@ -150,12 +184,27 @@ export function buildClassStatusDocument(
 
     const createdMs = checkout.created * 1000;
     row.attendees.push({
+      checkoutSessionId: checkout.checkoutSessionId || "",
       name: checkout.customerName,
       email: checkout.customerEmail,
       amount: formatAttendeeAmount(checkout.amountTotal),
       paymentMethod: isAchPayment(checkout.paymentMethodTypes) ? "ACH" : "Card",
       date: new Date(createdMs).toISOString().split("T")[0],
       status: attendeeStatus(checkout),
+      firstName: checkout.firstName || "",
+      lastName: checkout.lastName || "",
+      company: checkout.company || "",
+      jobTitle: checkout.jobTitle || "",
+      phone: checkout.phone || "",
+      address1: checkout.address1 || "",
+      city: checkout.city || "",
+      state: checkout.state || "",
+      postalCode: checkout.postalCode || "",
+      country: checkout.country || "",
+      hasImplementer: checkout.hasImplementer || "",
+      implementerName: checkout.implementerName || "",
+      wantsMoreInfo: checkout.wantsMoreInfo || "",
+      roleDesc: checkout.roleDesc || "",
     });
   }
 
@@ -173,28 +222,27 @@ export function buildClassStatusDocument(
   return { generatedAt, sessions };
 }
 
-/** Sidebar payload. Past sessions stay in the document but not on the list. */
+/** Sidebar payload. Past classes stay in the list so any class can be opened. */
 export function toAdminSessionList(
   doc: ClassStatusDocument | null,
   today: string,
 ): { ready: boolean; sessions: AdminSessionSummary[] } {
   if (!isClassStatusDocument(doc)) return { ready: false, sessions: [] };
 
-  const sessions = doc.sessions
-    .filter((session) => session.date >= today)
-    .map((session) => ({
-      productId: session.productId,
-      date: session.date,
-      dateDisplay: session.dateDisplay,
-      location: session.location,
-      sold: session.sold,
-      remaining: session.remaining,
-      maxSeats: session.maxSeats,
-      achCount: session.achCount,
-      cardCount: session.cardCount,
-      revenue: session.revenue,
-      priceAchAmount: session.priceAchAmount,
-    }));
+  const sessions = doc.sessions.map((session) => ({
+    productId: session.productId,
+    date: session.date,
+    dateDisplay: session.dateDisplay,
+    location: session.location,
+    sold: session.sold,
+    remaining: session.remaining,
+    maxSeats: session.maxSeats,
+    achCount: session.achCount,
+    cardCount: session.cardCount,
+    revenue: session.revenue,
+    priceAchAmount: session.priceAchAmount,
+    isPast: session.date < today,
+  }));
 
   return { ready: true, sessions };
 }

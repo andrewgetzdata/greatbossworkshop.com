@@ -30,8 +30,10 @@ function checkoutInput(session: Stripe.Checkout.Session): ClassStatusCheckoutInp
       ? piObj.latest_charge
       : null;
 
+  const meta = session.metadata ?? {};
+  const address = session.customer_details?.address;
   return {
-    workshopProduct: session.metadata?.workshop_product,
+    workshopProduct: meta.workshop_product,
     paymentIntentStatus: piObj ? piObj.status : null,
     latestChargeRefunded: charge ? charge.refunded === true : false,
     paymentMethodTypes: session.payment_method_types ?? [],
@@ -39,6 +41,21 @@ function checkoutInput(session: Stripe.Checkout.Session): ClassStatusCheckoutInp
     customerName: session.customer_details?.name ?? null,
     customerEmail: session.customer_details?.email || session.customer_email || null,
     created: session.created,
+    checkoutSessionId: session.id,
+    firstName: meta.attendee_first_name ?? "",
+    lastName: meta.attendee_last_name ?? "",
+    company: meta.attendee_company ?? "",
+    jobTitle: meta.attendee_job_title ?? "",
+    phone: session.customer_details?.phone ?? "",
+    address1: address?.line1 ?? "",
+    city: address?.city ?? "",
+    state: address?.state ?? "",
+    postalCode: address?.postal_code ?? "",
+    country: address?.country ?? "",
+    hasImplementer: meta.attendee_has_implementer ?? "",
+    implementerName: meta.attendee_implementer_name ?? "",
+    wantsMoreInfo: meta.attendee_wants_more_info ?? "",
+    roleDesc: meta.attendee_role_desc ?? "",
   };
 }
 
