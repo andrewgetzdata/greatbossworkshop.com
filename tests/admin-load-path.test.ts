@@ -277,6 +277,24 @@ describe("admin sign-in load path", () => {
 
     expect(page.fetches).toHaveLength(1);
     expect(page.elements.get("login-error")!.style.display).toBe("block");
+    expect(page.elements.get("login-error")!.textContent).toBe("Invalid password. Please try again.");
+    expect(page.elements.get("dashboard")!.style.display).not.toBe("block");
+    expect(page.storage.has("admin_key")).toBe(false);
+    expect(page.button.textContent).toBe("Sign In");
+  });
+
+  it("does not call a failed class-status read a bad password", async () => {
+    const page = boot();
+    page.elements.get("password")!.value = "secret";
+    const done = page.api.login();
+    await Promise.resolve();
+    page.pending[0].resolve(jsonResponse(502, "blob read failed"));
+    await done;
+
+    expect(page.fetches).toHaveLength(1);
+    expect(page.elements.get("login-error")!.style.display).toBe("block");
+    expect(page.elements.get("login-error")!.textContent).not.toContain("Invalid password");
+    expect(page.elements.get("login-error")!.textContent).toContain("Class status");
     expect(page.elements.get("dashboard")!.style.display).not.toBe("block");
     expect(page.storage.has("admin_key")).toBe(false);
     expect(page.button.textContent).toBe("Sign In");
