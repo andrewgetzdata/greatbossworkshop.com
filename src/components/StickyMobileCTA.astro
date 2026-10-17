@@ -46,5 +46,32 @@ const priceFormatted = new Intl.NumberFormat("en-US", {
     sticky.querySelector('[data-cta="sticky"]').addEventListener('click', function() {
       if (window.posthog) window.posthog.capture('cta_clicked', { source: 'sticky_mobile' });
     });
+
+    // Fixed bar covers the shared footer on small screens. Add its height
+    // on top of the footer's own padding so the trademark line can scroll clear.
+    var footerBasePad = '';
+    function syncFooterClearance() {
+      var footer = document.querySelector('footer');
+      if (!footer) return;
+      if (window.matchMedia('(min-width: 48rem)').matches) {
+        footer.style.paddingBottom = '';
+        return;
+      }
+      if (!footerBasePad) {
+        footer.style.paddingBottom = '';
+        footerBasePad = getComputedStyle(footer).paddingBottom;
+      }
+      footer.style.paddingBottom = 'calc(' + footerBasePad + ' + ' + sticky.offsetHeight + 'px)';
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', syncFooterClearance);
+    } else {
+      syncFooterClearance();
+    }
+    window.addEventListener('resize', syncFooterClearance);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(syncFooterClearance);
+    }
   })();
 </script>
