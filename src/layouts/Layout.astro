@@ -22,7 +22,13 @@ const {
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
 const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
-const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://roygetz.com";
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || "https://roygetz.com").replace(/\/$/, "");
+// Netlify serves page directories at a trailing slash and 301s the bare path.
+// og:url and canonical have to be that final URL, or a share of /greatbossworkshop
+// resolves to the site root (or to a redirect).
+const pathname = Astro.url.pathname;
+const canonicalPath = pathname === "/" ? "/" : `${pathname.replace(/\/$/, "")}/`;
+const canonicalUrl = canonicalPath === "/" ? siteUrl : `${siteUrl}${canonicalPath}`;
 
 const resolvedOgImage = ogImage ?? "/images/roy-getz.jpeg";
 
@@ -46,12 +52,13 @@ const finalJsonLd = jsonLd ?? defaultJsonLd;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
 
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={`${siteUrl}${resolvedOgImage}`} />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={siteUrl} />
+    <meta property="og:url" content={canonicalUrl} />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
