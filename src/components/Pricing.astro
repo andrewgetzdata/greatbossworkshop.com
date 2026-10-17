@@ -166,6 +166,23 @@ const inclusions = [
     return session.remaining <= 5 ? '#f97316' : '#6b7280';
   }
 
+  // Hours plus the street. Skip a separate city line when the address already includes it.
+  function detailLines(session, colorClass) {
+    var html = '';
+    if (session.time) {
+      html += '<p class="mt-1 text-sm ' + colorClass + '">' + session.time + '</p>';
+    }
+    var address = session.address || '';
+    var location = session.location || '';
+    if (address) {
+      html += '<p class="mt-1 text-sm ' + colorClass + '">' + address + '</p>';
+    }
+    if (location && (!address || address.indexOf(location) === -1)) {
+      html += '<p class="mt-1 text-sm ' + colorClass + '">' + location + '</p>';
+    }
+    return html;
+  }
+
   function renderSessions(sessions) {
     var container = document.getElementById('session-list');
     var loading = document.getElementById('sessions-loading');
@@ -190,13 +207,17 @@ const inclusions = [
     }
 
     container.innerHTML = '';
+    // One real date should not sit in a three-up row that used to be padded with placeholders.
+    container.className = sessions.length === 1
+      ? 'mx-auto grid max-w-md grid-cols-1 gap-3'
+      : 'mx-auto grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3';
     sessions.forEach(function(session) {
       if (session.status === 'on_sale') {
         var btn = document.createElement('button');
         btn.setAttribute('data-product', session.productId);
         btn.className = 'session-card w-full rounded-xl border-2 border-gray-600 bg-white/5 px-4 py-3 text-left transition hover:border-eos-orange hover:bg-white/10';
         btn.innerHTML = '<p class="text-lg font-bold text-white">' + session.dateDisplay + '</p>'
-          + '<p class="mt-1 text-sm text-gray-400">' + (session.location || '') + '</p>'
+          + detailLines(session, 'text-gray-400')
           + '<p class="session-spots mt-1 text-xs" style="color:' + spotsColor(session) + ';">'
           + spotsText(session) + '</p>';
 
@@ -213,7 +234,7 @@ const inclusions = [
         var div = document.createElement('div');
         div.className = 'w-full rounded-xl border-2 border-gray-700 bg-white/5 px-4 py-3 text-left opacity-50';
         div.innerHTML = '<p class="text-lg font-bold text-gray-400">' + session.dateDisplay + '</p>'
-          + '<p class="mt-1 text-sm text-gray-500">' + (session.location || '') + '</p>'
+          + detailLines(session, 'text-gray-500')
           + '<p class="mt-1 text-xs text-red-400">Sold out</p>';
         container.appendChild(div);
 
@@ -226,21 +247,6 @@ const inclusions = [
         }
       }
     });
-
-    // Fill remaining grid slots with "Coming soon" placeholders
-    var totalCards = container.children.length;
-    var remainder = totalCards % 3;
-    if (remainder !== 0) {
-      var fillCount = 3 - remainder;
-      for (var i = 0; i < fillCount; i++) {
-        var placeholder = document.createElement('div');
-        placeholder.className = 'w-full rounded-xl border-2 border-dashed border-gray-700 bg-white/5 px-4 py-3 text-left opacity-40';
-        placeholder.innerHTML = '<p class="text-lg font-bold text-gray-500">TBD</p>'
-          + '<p class="mt-1 text-sm text-gray-600">New date</p>'
-          + '<p class="mt-1 text-xs text-eos-orange">Coming soon</p>';
-        container.appendChild(placeholder);
-      }
-    }
   }
 
   function updateSpotsOnly(sessions) {
