@@ -39,6 +39,10 @@
       }
     ]
   },
+  "contact": {
+    "prompt": "Email Roy at",
+    "email": "roy.getz@eosworldwide.com"
+  },
   "agenda": [
     {
       "time": "9:00 AM",
