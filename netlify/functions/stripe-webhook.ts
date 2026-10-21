@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { stripe } from "./lib/stripe.js";
 import { sendConfirmationEmail } from "./lib/email.js";
+import { sendPurchaseToGhl } from "./lib/ghl.js";
 import { dispatchWorkshopWebhook } from "../../src/lib/workshop-webhook.js";
 import { triggerClassStatusRebuild } from "./lib/trigger-class-status-rebuild.js";
 
@@ -57,6 +58,8 @@ export async function handler(event: {
         mapsUrl: session.metadata?.workshop_maps_url,
         webinarUrl: session.metadata?.workshop_webinar_url,
       });
+
+      await sendPurchaseToGhl(session);
     },
     triggerClassStatusRebuild: () => triggerClassStatusRebuild(event),
   });
