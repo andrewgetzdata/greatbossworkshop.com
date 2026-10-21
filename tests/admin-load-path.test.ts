@@ -85,7 +85,6 @@ function boot(options: { adminKey?: string } = {}) {
   const elements = new Map<string, FakeEl>();
   const ids = [
     "password",
-    "annual-year",
     "annual-btn",
     "login-error",
     "login-form",
@@ -99,6 +98,8 @@ function boot(options: { adminKey?: string } = {}) {
     "main-subtitle",
     "attendee-table",
     "report-content",
+    "report-years",
+    "report-body",
   ];
   for (const id of ids) elements.set(id, createEl(id));
   const button = createEl("sign-in");
@@ -175,7 +176,7 @@ function boot(options: { adminKey?: string } = {}) {
     "URL",
     "Blob",
     "confirm",
-    `${loadAdminScript()}\nreturn { login: login, showDashboard: showDashboard, loadSessions: loadSessions, selectSession: selectSession, exportCSV: exportCSV, downloadAnnual: downloadAnnual, refundAttendee: refundAttendee };`,
+    `${loadAdminScript()}\nreturn { login: login, showDashboard: showDashboard, loadSessions: loadSessions, selectSession: selectSession, exportCSV: exportCSV, loadReport: loadReport, downloadAnnual: downloadAnnual, refundAttendee: refundAttendee };`,
   )(
     document,
     sessionStorage,
@@ -399,14 +400,34 @@ describe("admin sign-in load path", () => {
     );
     await exporting;
 
-    page.elements.get("annual-year")!.value = "2026";
+    const loading = page.api.loadReport(2026);
+    await Promise.resolve();
+    expect(page.fetches[3]).toBe("/api/report?key=secret&year=2026");
+    page.pending[3].resolve(jsonResponse(200, { availableYears: [2026], sessions: [], refunds: [] }));
+    await loading;
+    expect(page.elements.get("annual-btn")!.getAttribute("data-year")).toBe("2026");
+    expect(page.elements.get("report-years")!.innerHTML).toContain("2026");
+
     const annual = page.api.downloadAnnual();
     await Promise.resolve();
-    expect(page.fetches[3]).toBe("/api/attendees?key=secret&format=annual&year=2026");
-    page.pending[3].resolve(
+    expect(page.fetches[4]).toBe("/api/attendees?key=secret&format=annual&year=2026");
+    page.pending[4].resolve(
       jsonResponse(200, "Class,Date\r\n", { "content-type": "text/csv; charset=utf-8" }),
     );
     await annual;
-    expect(page.fetches).toHaveLength(4);
+    expect(page.fetches).toHaveLength(5);
+  });
+
+  it("keeps the annual download on the report view for the chart year", () => {
+    const page = readFileSync("src/pages/admin.astro", "utf8");
+    const reportStart = page.indexOf('id="report-content"');
+    const scriptStart = page.indexOf("<script is:inline>");
+    const report = page.slice(reportStart, scriptStart);
+    expect(page.slice(0, reportStart)).not.toContain('id="annual-year"');
+    expect(page.slice(0, reportStart)).not.toContain("Annual report");
+    expect(page.slice(0, reportStart)).not.toContain('id="annual-btn"');
+    expect(report).toContain('id="annual-btn"');
+    expect(report).toContain('aria-label="Download annual report"');
+    expect(loadAdminScript()).not.toContain("annual-year");
   });
 });
