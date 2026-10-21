@@ -154,6 +154,11 @@ Webhooks handle post-purchase confirmation emails.
    - `checkout.session.completed`
    - `checkout.session.async_payment_succeeded`
    - `checkout.session.async_payment_failed`
+   - `charge.refunded`
+   - `product.created`
+   - `product.updated`
+
+   The last three refresh the admin class-status document. `checkout.session.completed` does that too, after the confirmation email is sent. No new Netlify environment variables are required. After deploy, run the one-time backfill in the README admin section so the dashboard has data before the next sale.
 5. Copy the **Signing secret** (starts with `whsec_`)
 6. Add it as `STRIPE_WEBHOOK_SECRET` in Netlify environment variables
 
