@@ -103,10 +103,12 @@ import workshop from "../data/workshop.json";
       document.getElementById('dashboard').style.display = 'block';
     }
 
-    function failLogin(btn, originalText) {
+    function failLogin(btn, originalText, message) {
       adminKey = null;
       sessionStorage.removeItem('admin_key');
-      document.getElementById('login-error').style.display = 'block';
+      var error = document.getElementById('login-error');
+      error.textContent = message || 'Invalid password. Please try again.';
+      error.style.display = 'block';
       btn.disabled = false;
       btn.textContent = originalText;
       btn.style.opacity = '1';
@@ -217,7 +219,7 @@ import workshop from "../data/workshop.json";
         });
       } catch (e) {
         if (opts.fromLogin) {
-          failLogin(opts.btn, opts.originalText);
+          failLogin(opts.btn, opts.originalText, 'Class status could not be loaded. Please try again.');
           return;
         }
         list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">Failed to load sessions.</p>';
