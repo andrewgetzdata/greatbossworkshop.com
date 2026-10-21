@@ -46,6 +46,10 @@ import workshop from "../data/workshop.json";
           <p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">Loading sessions...</p>
         </div>
         <div style="padding:12px 20px;border-top:1px solid #e5e7eb;">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+            <select id="annual-year" aria-label="Report year" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;"></select>
+            <button id="annual-btn" onclick="downloadAnnual()" style="background:white;border:1px solid #d1d5db;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:#374151;font-weight:500;">Annual report</button>
+          </div>
           <button onclick="logout()" style="background:none;border:none;color:#6b7280;font-size:13px;cursor:pointer;padding:4px 0;">Sign out</button>
         </div>
       </div>
@@ -94,6 +98,22 @@ import workshop from "../data/workshop.json";
       if (e.key === 'Enter') login();
     });
 
+    function revealDashboard() {
+      document.getElementById('login-form').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+    }
+
+    function failLogin(btn, originalText, message) {
+      adminKey = null;
+      sessionStorage.removeItem('admin_key');
+      var error = document.getElementById('login-error');
+      error.textContent = message || 'Invalid password. Please try again.';
+      error.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = originalText;
+      btn.style.opacity = '1';
+    }
+
     function login() {
       var pw = document.getElementById('password').value;
       if (!pw) return;
@@ -103,25 +123,8 @@ import workshop from "../data/workshop.json";
       btn.textContent = 'Signing in...';
       btn.style.opacity = '0.7';
       document.getElementById('login-error').style.display = 'none';
-      fetch('/api/attendees?key=' + encodeURIComponent(pw))
-        .then(function(res) {
-          if (res.status === 401) {
-            document.getElementById('login-error').style.display = 'block';
-            btn.disabled = false;
-            btn.textContent = originalText;
-            btn.style.opacity = '1';
-            return;
-          }
-          sessionStorage.setItem('admin_key', pw);
-          adminKey = pw;
-          showDashboard();
-        })
-        .catch(function() {
-          document.getElementById('login-error').style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = originalText;
-          btn.style.opacity = '1';
-        });
+      adminKey = pw;
+      return loadSessions({ fromLogin: true, btn: btn, originalText: originalText });
     }
 
     function logout() {
@@ -130,21 +133,44 @@ import workshop from "../data/workshop.json";
     }
 
     function showDashboard() {
-      document.getElementById('login-form').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      loadSessions();
+      revealDashboard();
+      return loadSessions();
     }
 
-    async function loadSessions() {
+    async function loadSessions(opts) {
+      opts = opts || {};
       var list = document.getElementById('session-list');
       try {
         var res = await fetch('/api/attendees?key=' + encodeURIComponent(adminKey));
-        if (res.status === 401) { logout(); return; }
+        if (res.status === 401) {
+          if (opts.fromLogin) {
+            failLogin(opts.btn, opts.originalText);
+            return;
+          }
+          logout();
+          return;
+        }
+        if (!res.ok) throw new Error('attendees request failed');
         var data = await res.json();
+        if (opts.fromLogin) {
+          sessionStorage.setItem('admin_key', adminKey);
+          revealDashboard();
+          opts.btn.disabled = false;
+          opts.btn.textContent = opts.originalText;
+          opts.btn.style.opacity = '1';
+        }
         sessionsData = data.sessions || [];
 
+        if (data.ready === false) {
+          fillAnnualYears([]);
+          list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">Class status isn\'t ready yet. Run the one-time backfill, then refresh.</p>';
+          return;
+        }
+
+        fillAnnualYears(sessionsData);
+
         if (sessionsData.length === 0) {
-          list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">No upcoming sessions.</p>';
+          list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">No sessions.</p>';
           return;
         }
 
@@ -167,8 +193,8 @@ import workshop from "../data/workshop.json";
             }
           };
 
-          var badgeText = s.remaining === 0 ? 'Sold Out' : s.remaining + ' left';
-          var leftBadgeColor = s.remaining === 0 ? 'background:#fee2e2;color:#991b1b;' : 'background:#dbeafe;color:#1e40af;';
+          var badgeText = s.isPast ? 'Past' : (s.remaining === 0 ? 'Sold Out' : s.remaining + ' left');
+          var leftBadgeColor = s.isPast ? 'background:#f3f4f6;color:#6b7280;' : (s.remaining === 0 ? 'background:#fee2e2;color:#991b1b;' : 'background:#dbeafe;color:#1e40af;');
 
           card.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">'
             + '<span style="font-size:15px;font-weight:700;color:#1a1a1a;">' + s.dateDisplay + '</span>'
@@ -192,6 +218,10 @@ import workshop from "../data/workshop.json";
           list.appendChild(card);
         });
       } catch (e) {
+        if (opts.fromLogin) {
+          failLogin(opts.btn, opts.originalText, 'Class status could not be loaded. Please try again.');
+          return;
+        }
         list.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:24px 0;font-size:14px;">Failed to load sessions.</p>';
       }
     }
@@ -649,7 +679,16 @@ import workshop from "../data/workshop.json";
       try {
         var res = await fetch('/api/attendees?key=' + encodeURIComponent(adminKey) + '&product=' + productId);
         if (res.status === 401) { logout(); return; }
+        if (!res.ok) {
+          tableEl.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:48px 0;font-size:14px;">Failed to load attendees.</p>';
+          return;
+        }
         var data = await res.json();
+        if (data.ready === false) {
+          tableEl.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:48px 0;font-size:14px;">Class status isn\'t ready yet. Run the one-time backfill, then refresh.</p>';
+          document.getElementById('export-btn').style.display = 'none';
+          return;
+        }
         currentAttendees = data.attendees || [];
 
         if (currentAttendees.length === 0) {
@@ -673,37 +712,130 @@ import workshop from "../data/workshop.json";
         currentAttendees.forEach(function(a) {
           var statusColor = a.status === 'paid' ? '#166534' : a.status === 'refunded' ? '#991b1b' : '#6b7280';
           var statusWeight = a.status === 'paid' ? 'font-weight:500;' : '';
+          var refundBtn = a.status === 'paid' && a.checkoutSessionId
+            ? ' <button type="button" data-refund="' + a.checkoutSessionId + '" style="margin-left:8px;background:white;border:1px solid #d1d5db;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer;">Refund</button>'
+            : '';
           html += '<tr>'
             + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (a.name || '\u2014') + '</td>'
             + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (a.email || '\u2014') + '</td>'
             + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + a.amount + '</td>'
             + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + a.paymentMethod + '</td>'
             + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + a.date + '</td>'
-            + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;color:' + statusColor + ';' + statusWeight + '">' + a.status + '</td>'
+            + '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;color:' + statusColor + ';' + statusWeight + '">' + a.status + refundBtn + '</td>'
             + '</tr>';
         });
 
         html += '</tbody></table>';
         tableEl.innerHTML = html;
+        tableEl.querySelectorAll('[data-refund]').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var id = btn.getAttribute('data-refund');
+            var attendee = currentAttendees.find(function(a) { return a.checkoutSessionId === id; });
+            refundAttendee(attendee, btn);
+          });
+        });
       } catch (e) {
         tableEl.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:48px 0;font-size:14px;">Failed to load attendees.</p>';
       }
     }
 
-    function exportCSV() {
-      if (!currentAttendees.length) return;
-      var session = sessionsData.find(function(s) { return s.productId === currentProductId; });
-      var csv = 'Name,Email,Amount,Payment Method,Purchase Date,Status\n';
-      currentAttendees.forEach(function(a) {
-        csv += '"' + (a.name || '') + '","' + (a.email || '') + '","' + a.amount + '","' + a.paymentMethod + '","' + a.date + '","' + a.status + '"\n';
+    function fillAnnualYears(sessions) {
+      var select = document.getElementById('annual-year');
+      if (!select) return;
+      var years = {};
+      (sessions || []).forEach(function(s) {
+        if (s.date && s.date.length >= 4) years[s.date.slice(0, 4)] = true;
       });
-      var blob = new Blob([csv], { type: 'text/csv' });
+      var list = Object.keys(years).sort();
+      var current = String(new Date().getFullYear());
+      if (list.indexOf(current) === -1) list.push(current);
+      list.sort();
+      select.innerHTML = list.map(function(y) {
+        return '<option value="' + y + '">' + y + '</option>';
+      }).join('');
+      select.value = list.indexOf(current) !== -1 ? current : list[list.length - 1];
+    }
+
+    function saveTextFile(filename, text) {
+      var blob = new Blob([text], { type: 'text/csv' });
       var url = URL.createObjectURL(blob);
       var link = document.createElement('a');
       link.href = url;
-      link.download = 'attendees-' + (session ? session.date : 'unknown') + '.csv';
+      link.download = filename;
       link.click();
       URL.revokeObjectURL(url);
+    }
+
+    function filenameFromDisposition(header, fallback) {
+      var match = /filename="([^"]+)"/.exec(header || '');
+      return match ? match[1] : fallback;
+    }
+
+    async function exportCSV() {
+      if (!currentProductId) return;
+      var res = await fetch('/api/attendees?key=' + encodeURIComponent(adminKey) + '&product=' + encodeURIComponent(currentProductId) + '&format=csv');
+      if (res.status === 401) { logout(); return; }
+      var type = res.headers.get('content-type') || '';
+      if (type.indexOf('text/csv') === -1) {
+        alert('Class status isn\'t ready yet. Run the one-time backfill, then refresh.');
+        return;
+      }
+      saveTextFile(filenameFromDisposition(res.headers.get('content-disposition'), 'attendees.csv'), await res.text());
+    }
+
+    async function downloadAnnual() {
+      var yearEl = document.getElementById('annual-year');
+      var year = (yearEl && yearEl.value) || String(new Date().getFullYear());
+      var btn = document.getElementById('annual-btn');
+      if (btn) btn.disabled = true;
+      try {
+        var res = await fetch('/api/attendees?key=' + encodeURIComponent(adminKey) + '&format=annual&year=' + encodeURIComponent(year));
+        if (res.status === 401) { logout(); return; }
+        var type = res.headers.get('content-type') || '';
+        if (type.indexOf('text/csv') === -1) {
+          alert('Class status isn\'t ready yet. Run the one-time backfill, then refresh.');
+          return;
+        }
+        saveTextFile(filenameFromDisposition(res.headers.get('content-disposition'), 'annual-report-' + year + '.csv'), await res.text());
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function refundAttendee(attendee, btn) {
+      if (!attendee || attendee.status !== 'paid' || !attendee.checkoutSessionId) return;
+      var label = attendee.name || attendee.email || 'this attendee';
+      if (!confirm('Refund the full remaining amount for ' + label + ' (' + attendee.amount + ')?')) return;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Refunding...';
+      }
+      try {
+        var res = await fetch('/api/refund-attendee?key=' + encodeURIComponent(adminKey), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ checkoutSessionId: attendee.checkoutSessionId })
+        });
+        if (res.status === 401) { logout(); return; }
+        var data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Refund failed');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Refund';
+          }
+          return;
+        }
+        if (data.alreadyRefunded) alert('This payment is already refunded.');
+        else if (data.refreshed === false) alert('Refunded in Stripe. Refresh this class if the row still says paid.');
+        if (currentProductId) await selectSession(currentProductId);
+      } catch (e) {
+        alert('Refund failed');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Refund';
+        }
+      }
     }
   </script>
 </body>

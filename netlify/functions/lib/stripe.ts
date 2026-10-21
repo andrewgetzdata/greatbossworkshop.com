@@ -189,8 +189,9 @@ export async function getTicketsSoldByProduct(): Promise<Map<string, number>> {
 
 /**
  * Count completed, non-refunded checkout sessions for a specific product.
- * Thin wrapper over getTicketsSoldByProduct so the authoritative oversell gate
- * and the display path share one implementation (no drift). Same one-pass cost.
+ * The checkout oversell gate still uses this live scan. Admin class status
+ * reads the blob instead; that document is rebuilt with the same
+ * isSeatOccupied rule.
  */
 export async function getTicketsSoldForProduct(productId: string): Promise<number> {
   return (await getTicketsSoldByProduct()).get(productId) ?? 0;
