@@ -194,13 +194,13 @@ The response is `202` immediately, which only means Netlify started the function
 7. Choose a year and click **Annual report** — downloads full-sellout revenue, actual revenue, and the gap
 8. Click **Sign out** — should return to login screen
 
-#### 8. Grid Fill (Coming Soon Placeholders)
+#### 8. Session Date Cards
 
-Verify incomplete grid rows are filled with "Coming soon" cards.
+Verify each real session is listed once, with its hours and street address. Empty grid slots stay empty.
 
-1. Ensure the number of active sessions is not divisible by 3
-2. Verify the last row has dashed-border "TBD / Coming soon" placeholder cards filling the remaining slots
-3. Placeholders should not be clickable
+1. Load the workshop page with the upcoming sessions
+2. Each card shows the display date, the session hours, and the street address
+3. No dashed "TBD / New date / Coming soon" cards appear
 
 ### Test Card Numbers
 
