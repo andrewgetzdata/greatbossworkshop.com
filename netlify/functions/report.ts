@@ -1,3 +1,4 @@
+import { emptySessionPaymentStats, recordCompletedCheckout } from "../../src/lib/report-metrics.js";
 import { stripe, getAllWorkshopSessions } from "./lib/stripe.js";
 
 export async function handler(event: {
@@ -20,22 +21,9 @@ export async function handler(event: {
   try {
     const sessions = await getAllWorkshopSessions(year);
 
-    // Build per-session stats by scanning checkout sessions
-    const sessionStats: Record<string, {
-      achCount: number;
-      cardCount: number;
-      achRevenue: number;
-      cardRevenue: number;
-      revenue: number;
-      refundCount: number;
-      refundAmount: number;
-    }> = {};
+    const sessionStats: Record<string, ReturnType<typeof emptySessionPaymentStats>> = {};
     for (const s of sessions) {
-      sessionStats[s.productId] = {
-        achCount: 0, cardCount: 0,
-        achRevenue: 0, cardRevenue: 0, revenue: 0,
-        refundCount: 0, refundAmount: 0,
-      };
+      sessionStats[s.productId] = emptySessionPaymentStats();
     }
 
     const productIds = new Set(sessions.map((s) => s.productId));
@@ -73,38 +61,33 @@ export async function handler(event: {
       }
 
       const stats = sessionStats[pid];
+      const amountDollars = Math.round(amount / 100);
 
       if (isRefunded) {
-        stats.refundCount++;
-
-        // Look up refund details
+        let refundAmountDollars = 0;
         if (chargeId) {
           const refundList = await stripe.refunds.list({ charge: chargeId });
           for (const refund of refundList.data) {
-            const refundAmountDollars = Math.round(refund.amount / 100);
-            stats.refundAmount += refundAmountDollars;
-
+            const refundDollars = Math.round(refund.amount / 100);
+            refundAmountDollars += refundDollars;
             const session = sessions.find((s) => s.productId === pid);
             refunds.push({
               sessionDate: session?.dateDisplay || "",
               attendeeName: cs.customer_details?.name || "",
               attendeeEmail: cs.customer_details?.email || cs.customer_email || "",
-              amount: refundAmountDollars,
+              amount: refundDollars,
               refundDate: new Date(refund.created * 1000).toISOString().split("T")[0],
             });
           }
         }
+        recordCompletedCheckout(stats, {
+          isAch,
+          amountDollars,
+          isRefunded: true,
+          refundAmountDollars,
+        });
       } else {
-        // Count revenue and payment method
-        const amountDollars = Math.round(amount / 100);
-        if (isAch) {
-          stats.achCount++;
-          stats.achRevenue += amountDollars;
-        } else {
-          stats.cardCount++;
-          stats.cardRevenue += amountDollars;
-        }
-        stats.revenue += amountDollars;
+        recordCompletedCheckout(stats, { isAch, amountDollars, isRefunded: false });
       }
     }
 
