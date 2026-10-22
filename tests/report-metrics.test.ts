@@ -109,14 +109,14 @@ describe("aggregateReportMetrics", () => {
     productId: "prod_june",
     date: "2026-06-23",
     maxSeats: 25,
-    sold: 21,
-    remaining: 4,
+    sold: 15,
+    remaining: 10,
     isPast: false,
-    achCount: 14,
-    cardCount: 7,
-    achRevenue: 13300,
-    cardRevenue: 6650,
-    revenue: 19950,
+    achCount: 10,
+    cardCount: 5,
+    achRevenue: 9500,
+    cardRevenue: 4750,
+    revenue: 14250,
     refundCount: 1,
     refundAmount: 950,
   });
@@ -124,16 +124,17 @@ describe("aggregateReportMetrics", () => {
   it("totals ACH vs Card revenue and signups the way the cards claim", () => {
     const metrics = aggregateReportMetrics([past, future], [{ amount: 950 }]);
 
-    expect(metrics.achRevenue).toBe(26600);
-    expect(metrics.cardRevenue).toBe(17100);
+    expect(metrics.achRevenue).toBe(22800);
+    expect(metrics.cardRevenue).toBe(15200);
     expect(metrics.totalRevenue).toBe(metrics.achRevenue + metrics.cardRevenue);
-    expect(metrics.totalRevenue).toBe(43700);
-    expect(metrics.signups).toBe(46);
-    expect(metrics.achCount).toBe(28);
-    expect(metrics.cardCount).toBe(18);
+    expect(metrics.totalRevenue).toBe(38000);
+    expect(metrics.signups).toBe(40);
+    expect(metrics.achCount).toBe(24);
+    expect(metrics.cardCount).toBe(16);
     expect(metrics.refundTotal).toBe(950);
     expect(metrics.refundCount).toBe(1);
-    expect(metrics.netRevenue).toBe(metrics.totalRevenue - metrics.refundTotal);
+    expect(metrics.netRevenue).toBe(metrics.totalRevenue);
+    expect(metrics.netRevenue).not.toBe(metrics.totalRevenue - metrics.refundTotal);
   });
 
   it("treats full sellout as capacity at the ACH price, not booked revenue", () => {
@@ -142,13 +143,15 @@ describe("aggregateReportMetrics", () => {
 
     expect(metrics.fullSellout).toBe(25 * 950 + 25 * 950);
     expect(metrics.fullSellout).toBe(year.maxRevenue);
-    expect(metrics.totalRevenue).toBe(43700);
+    expect(metrics.totalRevenue).toBe(38000);
     expect(metrics.fullSellout).not.toBe(metrics.totalRevenue);
     expect(metrics.selloutGap).toBe(metrics.fullSellout - metrics.totalRevenue);
     expect(year.projected).not.toBe(year.actual);
+    expect(year.projected).not.toBe(year.maxRevenue);
     expect(year.projected).toBe(
       forecastSession(past).expected + forecastSession(future).expected,
     );
+    expect(year.projected).toBe(23750 + 24 * 950);
   });
 
   it("matches the annual report's if-fully-sold-out total", () => {

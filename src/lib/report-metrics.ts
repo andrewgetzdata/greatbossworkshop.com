@@ -133,7 +133,8 @@ export function aggregateReportMetrics(
     cardCount: sum(sessions, "cardCount"),
     refundTotal,
     refundCount: refunds.length,
-    netRevenue: totalRevenue - refundTotal,
+    // Booked revenue already omits fully refunded checkouts; do not subtract again.
+    netRevenue: totalRevenue,
     fullSellout: year.maxRevenue,
     projected: year.projected,
     actual: year.actual,

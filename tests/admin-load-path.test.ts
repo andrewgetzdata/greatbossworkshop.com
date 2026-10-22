@@ -1,5 +1,11 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import {
+  REPORT_LABELS,
+  aggregateReportMetrics,
+  formatReportMoney,
+} from "../src/lib/report-metrics";
+import type { SessionStat } from "../src/lib/report-forecast";
 
 function loadAdminScript() {
   const page = readFileSync("src/pages/admin.astro", "utf8");
@@ -420,6 +426,51 @@ describe("admin sign-in load path", () => {
   });
 
   it("renders report card values that match ACH, card, signup, and sellout math", async () => {
+    const reportSessions: SessionStat[] = [
+      {
+        productId: "prod_apr",
+        date: "2026-04-15",
+        dateDisplay: "Apr 15, 2026",
+        location: "Detroit",
+        maxSeats: 25,
+        sold: 25,
+        remaining: 0,
+        isPast: true,
+        achCount: 14,
+        cardCount: 11,
+        achRevenue: 13300,
+        cardRevenue: 10450,
+        revenue: 23750,
+        refundCount: 0,
+        refundAmount: 0,
+        priceAchAmount: 950,
+        priceCardAmount: 979,
+      },
+      {
+        productId: "prod_june",
+        date: "2026-06-23",
+        dateDisplay: "Jun 23, 2026",
+        location: "Chicago",
+        maxSeats: 25,
+        sold: 15,
+        remaining: 10,
+        isPast: false,
+        achCount: 10,
+        cardCount: 5,
+        achRevenue: 9500,
+        cardRevenue: 4750,
+        revenue: 14250,
+        refundCount: 1,
+        refundAmount: 950,
+        priceAchAmount: 950,
+        priceCardAmount: 979,
+      },
+    ];
+    const metrics = aggregateReportMetrics(reportSessions, [{ amount: 950 }]);
+    expect(metrics.projected).not.toBe(metrics.fullSellout);
+    expect(metrics.projected).not.toBe(metrics.totalRevenue);
+    expect(metrics.netRevenue).toBe(metrics.totalRevenue);
+
     const page = boot();
     page.elements.get("password")!.value = "secret";
     const done = page.api.login();
@@ -433,54 +484,27 @@ describe("admin sign-in load path", () => {
       jsonResponse(200, {
         availableYears: [2026],
         refunds: [{ amount: 950 }],
-        sessions: [
-          {
-            date: "2026-04-15",
-            maxSeats: 25,
-            sold: 25,
-            remaining: 0,
-            isPast: true,
-            achCount: 14,
-            cardCount: 11,
-            achRevenue: 13300,
-            cardRevenue: 10450,
-            revenue: 23750,
-            refundAmount: 0,
-            priceAchAmount: 950,
-          },
-          {
-            date: "2026-06-23",
-            maxSeats: 25,
-            sold: 21,
-            remaining: 4,
-            isPast: false,
-            achCount: 14,
-            cardCount: 7,
-            achRevenue: 13300,
-            cardRevenue: 6650,
-            revenue: 19950,
-            refundAmount: 950,
-            priceAchAmount: 950,
-          },
-        ],
+        sessions: reportSessions,
       }),
     );
     await loading;
 
-    const html = page.elements.get("report-body")!.innerHTML.replace(/,/g, "");
-    expect(html).toContain("Total Revenue");
-    expect(html).toContain("43700");
-    expect(html).toContain("ACH $26600");
-    expect(html).toContain("Card $17100");
-    expect(html).toContain("Signups");
-    expect(html).toContain(">46<");
-    expect(html).toContain("Refunds");
-    expect(html).toContain("-$950");
-    expect(html).toContain("Net Revenue");
-    expect(html).toContain("42750");
-    expect(html).toContain("Full sellout");
-    expect(html).toContain("47500");
-    expect(html).toContain("Projected");
+    const html = page.elements.get("report-body")!.innerHTML;
+    expect(html).toContain(REPORT_LABELS.totalRevenue);
+    expect(html).toContain(formatReportMoney(metrics.totalRevenue));
+    expect(html).toContain(formatReportMoney(metrics.achRevenue));
+    expect(html).toContain(formatReportMoney(metrics.cardRevenue));
+    expect(html).toContain(REPORT_LABELS.signups);
+    expect(html).toContain(">" + metrics.signups + "<");
+    expect(html).toContain(REPORT_LABELS.refunds);
+    expect(html).toContain(formatReportMoney(-metrics.refundTotal));
+    expect(html).toContain(REPORT_LABELS.netRevenue);
+    expect(html).toContain(formatReportMoney(metrics.netRevenue));
+    expect(html).toContain(REPORT_LABELS.fullSellout);
+    expect(html).toContain(formatReportMoney(metrics.fullSellout));
+    expect(html).toContain(REPORT_LABELS.projected);
+    expect(html).toContain(formatReportMoney(metrics.projected));
+    expect(html).not.toContain(formatReportMoney(metrics.totalRevenue - metrics.refundTotal));
   });
 
   it("keeps the annual download on the report view for the chart year", () => {

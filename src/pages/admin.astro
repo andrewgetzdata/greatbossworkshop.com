@@ -109,13 +109,12 @@ import workshop from "../data/workshop.json";
     }
     .report-metrics {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 12px;
       margin-bottom: 28px;
     }
-    @media (min-width: 1100px) {
-      .report-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .report-metrics.report-metrics-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .report-metrics.report-metrics-2 {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     }
     .report-card {
       background: white;
@@ -138,7 +137,7 @@ import workshop from "../data/workshop.json";
       margin-top: 6px;
       line-height: 1.15;
     }
-    .report-card-value.is-refund { color: #9b1c1c; }
+    .report-card-value.is-refund { color: var(--report-slate); }
     .report-card-detail {
       font-size: 12px;
       color: var(--report-navy-gray);
@@ -146,12 +145,9 @@ import workshop from "../data/workshop.json";
     }
     .report-charts {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 12px;
       margin-bottom: 36px;
-    }
-    @media (min-width: 900px) {
-      .report-charts { grid-template-columns: 1fr 1fr; }
     }
     .report-chart {
       background: white;
@@ -507,7 +503,7 @@ import workshop from "../data/workshop.json";
 
     function money(n) {
       var sign = n < 0 ? '-' : '';
-      return sign + '$' + Math.abs(n).toLocaleString();
+      return sign + '$' + Math.abs(n).toLocaleString('en-US');
     }
 
     function reportStatus(title, detail, retryYear) {
@@ -554,6 +550,7 @@ import workshop from "../data/workshop.json";
         return;
       }
 
+      // Keep these sums aligned with src/lib/report-metrics.ts (tested).
       var achRevenue = 0, cardRevenue = 0, totalRevenue = 0, signups = 0, achCount = 0, cardCount = 0, refundTotal = 0;
       sessions.forEach(function(s) {
         achRevenue += s.achRevenue || 0;
@@ -566,13 +563,8 @@ import workshop from "../data/workshop.json";
       });
       var refunds = data.refunds || [];
       var refundCount = refunds.length;
-      var netRevenue = totalRevenue - refundTotal;
+      var netRevenue = totalRevenue;
       var forecast = yearForecastFromSessions(sessions, 90);
-
-      data.totalRevenue = totalRevenue;
-      data.totalSold = signups;
-      data.totalACH = achCount;
-      data.totalCard = cardCount;
 
       var html = '';
       html += '<div class="report-section-head"><h3 class="report-section-title">Session Revenue + Signups</h3></div>';
@@ -580,7 +572,7 @@ import workshop from "../data/workshop.json";
       html += metricCard('Total Revenue', money(totalRevenue), 'ACH ' + money(achRevenue) + ' \u00B7 Card ' + money(cardRevenue));
       html += metricCard('Signups', String(signups), achCount + ' ACH \u00B7 ' + cardCount + ' Card');
       html += metricCard('Refunds', money(-refundTotal), refundCount ? (refundCount + ' refund' + (refundCount !== 1 ? 's' : '')) : 'None recorded', refundTotal > 0);
-      html += metricCard('Net Revenue', money(netRevenue), 'Booked minus refunds');
+      html += metricCard('Net Revenue', money(netRevenue), 'Excludes refunded checkouts');
       html += '</div>';
 
       html += '<div class="report-charts">';
@@ -791,7 +783,7 @@ import workshop from "../data/workshop.json";
               {
                 label: 'Expected',
                 data: forecast.perExpected,
-                backgroundColor: '#FBEDE2',
+                backgroundColor: 'rgba(68, 87, 119, 0.55)',
                 borderColor: '#445777',
                 borderWidth: 1,
                 borderRadius: 4,
