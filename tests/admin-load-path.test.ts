@@ -407,6 +407,7 @@ describe("admin sign-in load path", () => {
     await loading;
     expect(page.elements.get("annual-btn")!.getAttribute("data-year")).toBe("2026");
     expect(page.elements.get("report-years")!.innerHTML).toContain("2026");
+    expect(page.elements.get("report-body")!.innerHTML).toContain("No sessions in 2026");
 
     const annual = page.api.downloadAnnual();
     await Promise.resolve();
@@ -416,6 +417,70 @@ describe("admin sign-in load path", () => {
     );
     await annual;
     expect(page.fetches).toHaveLength(5);
+  });
+
+  it("renders report card values that match ACH, card, signup, and sellout math", async () => {
+    const page = boot();
+    page.elements.get("password")!.value = "secret";
+    const done = page.api.login();
+    await Promise.resolve();
+    page.pending[0].resolve(jsonResponse(200, { ready: true, sessions: [session] }));
+    await done;
+
+    const loading = page.api.loadReport(2026);
+    await Promise.resolve();
+    page.pending[1].resolve(
+      jsonResponse(200, {
+        availableYears: [2026],
+        refunds: [{ amount: 950 }],
+        sessions: [
+          {
+            date: "2026-04-15",
+            maxSeats: 25,
+            sold: 25,
+            remaining: 0,
+            isPast: true,
+            achCount: 14,
+            cardCount: 11,
+            achRevenue: 13300,
+            cardRevenue: 10450,
+            revenue: 23750,
+            refundAmount: 0,
+            priceAchAmount: 950,
+          },
+          {
+            date: "2026-06-23",
+            maxSeats: 25,
+            sold: 21,
+            remaining: 4,
+            isPast: false,
+            achCount: 14,
+            cardCount: 7,
+            achRevenue: 13300,
+            cardRevenue: 6650,
+            revenue: 19950,
+            refundAmount: 950,
+            priceAchAmount: 950,
+          },
+        ],
+      }),
+    );
+    await loading;
+
+    const html = page.elements.get("report-body")!.innerHTML.replace(/,/g, "");
+    expect(html).toContain("Total Revenue");
+    expect(html).toContain("43700");
+    expect(html).toContain("ACH $26600");
+    expect(html).toContain("Card $17100");
+    expect(html).toContain("Signups");
+    expect(html).toContain(">46<");
+    expect(html).toContain("Refunds");
+    expect(html).toContain("-$950");
+    expect(html).toContain("Net Revenue");
+    expect(html).toContain("42750");
+    expect(html).toContain("Full sellout");
+    expect(html).toContain("47500");
+    expect(html).toContain("Projected");
   });
 
   it("keeps the annual download on the report view for the chart year", () => {

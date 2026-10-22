@@ -10,8 +10,238 @@ import workshop from "../data/workshop.json";
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>Admin | {workshop.title}</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style is:global>
+    :root {
+      --report-navy: #142233;
+      --report-orange: #FF7900;
+      --report-navy-gray: #445777;
+      --report-blue-gray: #E5E8EB;
+      --report-peach: #FBEDE2;
+      --report-light: #F7FAFC;
+      --report-slate: #3B4343;
+    }
+    #report-content {
+      padding: 28px 32px 40px;
+      overflow-y: auto;
+      height: 100%;
+      box-sizing: border-box;
+      background: var(--report-light);
+    }
+    #report-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--report-light);
+      padding-bottom: 12px;
+    }
+    .report-heading {
+      margin: 0 0 10px;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--report-navy);
+    }
+    #report-years {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .report-year {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--report-blue-gray);
+      background: white;
+      color: var(--report-navy-gray);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .report-year:hover { border-color: var(--report-orange); color: var(--report-navy); }
+    .report-year.is-active {
+      background: var(--report-navy);
+      border-color: var(--report-navy);
+      color: white;
+    }
+    .report-year:focus-visible, #annual-btn:focus-visible, .report-retry:focus-visible, #fill-rate-input:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px white, 0 0 0 4px var(--report-orange);
+    }
+    #annual-btn {
+      margin-left: auto;
+      background: white;
+      border: 1px solid var(--report-blue-gray);
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      cursor: pointer;
+      color: var(--report-navy-gray);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 0;
+    }
+    #annual-btn:hover { border-color: var(--report-orange); color: var(--report-orange); }
+    #annual-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .report-section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 0 0 16px;
+    }
+    .report-section-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--report-navy);
+      padding-left: 10px;
+      border-left: 3px solid var(--report-orange);
+    }
+    .report-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    @media (min-width: 1100px) {
+      .report-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .report-metrics.report-metrics-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .report-card {
+      background: white;
+      border: 1px solid var(--report-blue-gray);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .report-card-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--report-navy-gray);
+      font-weight: 600;
+    }
+    .report-card-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--report-navy);
+      letter-spacing: -0.03em;
+      margin-top: 6px;
+      line-height: 1.15;
+    }
+    .report-card-value.is-refund { color: #9b1c1c; }
+    .report-card-detail {
+      font-size: 12px;
+      color: var(--report-navy-gray);
+      margin-top: 6px;
+    }
+    .report-charts {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+    @media (min-width: 900px) {
+      .report-charts { grid-template-columns: 1fr 1fr; }
+    }
+    .report-chart {
+      background: white;
+      border: 1px solid var(--report-blue-gray);
+      border-radius: 12px;
+      padding: 16px 18px 12px;
+    }
+    .report-chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--report-navy);
+      margin-bottom: 8px;
+    }
+    .report-chart-canvas { height: 280px; }
+    .report-chart-canvas.is-tall { height: 300px; }
+    .report-fill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--report-navy-gray);
+      font-weight: 500;
+    }
+    #fill-rate-input {
+      width: 64px;
+      padding: 6px 10px;
+      border: 1px solid var(--report-blue-gray);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--report-navy);
+      background: white;
+    }
+    .report-status {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+      text-align: center;
+      color: var(--report-navy-gray);
+      gap: 8px;
+      padding: 32px 16px;
+    }
+    .report-status-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--report-navy);
+    }
+    .report-status p { margin: 0; font-size: 14px; line-height: 1.5; max-width: 36ch; }
+    .report-retry {
+      margin-top: 8px;
+      background: white;
+      border: 1px solid var(--report-blue-gray);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--report-navy);
+      cursor: pointer;
+    }
+    .report-retry:hover { border-color: var(--report-orange); }
+    .report-table-wrap {
+      background: white;
+      border: 1px solid var(--report-blue-gray);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .report-table { width: 100%; border-collapse: collapse; }
+    .report-table th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--report-navy-gray);
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--report-blue-gray);
+      background: var(--report-light);
+    }
+    .report-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--report-light);
+      font-size: 14px;
+      color: var(--report-navy);
+    }
+    .report-muted { color: var(--report-navy-gray); font-size: 14px; margin: 0 0 16px; }
+  </style>
 </head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f3f4f6;color:#1a1a1a;min-height:100vh;">
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F7FAFC;color:#142233;min-height:100vh;">
 
   <!-- Login -->
   <div id="login-form" style="max-width:360px;margin:120px auto;text-align:center;padding:0 16px;">
@@ -51,7 +281,7 @@ import workshop from "../data/workshop.json";
       </div>
 
       <!-- Main -->
-      <div style="flex:1;overflow-y:auto;background:#f9fafb;">
+      <div style="flex:1;overflow-y:auto;background:#F7FAFC;">
         <div id="main-empty" style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:15px;">
           <p>Select a session to view its attendees</p>
         </div>
@@ -68,13 +298,13 @@ import workshop from "../data/workshop.json";
           </div>
           <div id="attendee-table"></div>
         </div>
-        <div id="report-content" style="display:none;padding:28px 32px;overflow-y:auto;height:100%;box-sizing:border-box;">
-          <div id="report-toolbar" style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
-            <div id="report-years" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"></div>
-            <button id="annual-btn" type="button" onclick="downloadAnnual()" aria-label="Download annual report" title="Download annual report"
-              style="margin-left:auto;background:white;border:1px solid #d1d5db;width:36px;height:36px;border-radius:999px;cursor:pointer;color:#374151;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;"
-              onmouseenter="this.style.borderColor='#f97316';this.style.color='#f97316';"
-              onmouseleave="if(!this.disabled){this.style.borderColor='#d1d5db';this.style.color='#374151';}">
+        <div id="report-content" style="display:none;">
+          <div id="report-toolbar">
+            <div>
+              <h2 class="report-heading">Report</h2>
+              <div id="report-years"></div>
+            </div>
+            <button id="annual-btn" type="button" onclick="downloadAnnual()" aria-label="Download annual report" title="Download annual report">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M12 4v11"></path>
                 <path d="m7 11 5 5 5-5"></path>
@@ -275,21 +505,36 @@ import workshop from "../data/workshop.json";
       btn.setAttribute('aria-label', label);
     }
 
+    function money(n) {
+      var sign = n < 0 ? '-' : '';
+      return sign + '$' + Math.abs(n).toLocaleString();
+    }
+
+    function reportStatus(title, detail, retryYear) {
+      var html = '<div class="report-status">';
+      if (title) html += '<p class="report-status-title">' + title + '</p>';
+      if (detail) html += '<p>' + detail + '</p>';
+      if (retryYear) {
+        html += '<button type="button" class="report-retry" onclick="loadReport(' + retryYear + ')">Try again</button>';
+      }
+      html += '</div>';
+      return html;
+    }
+
     async function loadReport(year) {
       currentYear = year;
       syncAnnualDownload(year);
-      var years = document.getElementById('report-years');
       var body = document.getElementById('report-body');
-      if (years) years.innerHTML = '';
-      if (body) body.innerHTML = '<p style="text-align:center;color:#6b7280;padding:48px 0;font-size:14px;">Loading report...</p>';
+      if (body) body.innerHTML = reportStatus('Loading ' + year + ' report\u2026', 'Pulling session revenue, signups, and capacity.');
       try {
         var res = await fetch('/api/report?key=' + encodeURIComponent(adminKey) + '&year=' + year);
         if (res.status === 401) { logout(); return; }
+        if (!res.ok) throw new Error('report request failed');
         var data = await res.json();
         currentReportData = data;
         renderReport(data);
       } catch (e) {
-        if (body) body.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:48px 0;font-size:14px;">Failed to load report.</p>';
+        if (body) body.innerHTML = reportStatus('Couldn\u2019t load the ' + year + ' report', 'Check your connection and try again.', year);
       }
     }
 
@@ -299,129 +544,134 @@ import workshop from "../data/workshop.json";
       var yearsHtml = '';
       (data.availableYears || []).forEach(function(y) {
         var isActive = y === currentYear;
-        var bgColor = isActive ? '#f97316' : '#f3f4f6';
-        var textColor = isActive ? 'white' : '#374151';
-        yearsHtml += '<button onclick="loadReport(' + y + ')" style="padding:6px 16px;border-radius:999px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:' + bgColor + ';color:' + textColor + ';">' + y + '</button>';
+        yearsHtml += '<button type="button" class="report-year' + (isActive ? ' is-active' : '') + '" onclick="loadReport(' + y + ')">' + y + '</button>';
       });
       if (yearsEl) yearsEl.innerHTML = yearsHtml;
 
-      var html = '';
       var sessions = data.sessions || [];
       if (sessions.length === 0) {
-        html += '<div style="display:flex;align-items:center;justify-content:center;height:300px;color:#9ca3af;font-size:15px;text-align:center;">'
-          + '<p>No session data for ' + currentYear + ' yet.<br>Sessions will appear here once workshop dates are created in Stripe.</p>'
-          + '</div>';
-        if (body) body.innerHTML = html;
+        if (body) body.innerHTML = reportStatus('No sessions in ' + currentYear, 'Sessions appear here once workshop dates are created in Stripe.');
         return;
       }
 
-      // Compute aggregates from per-session data
-      var totalRevenue = 0, achRevenue = 0, cardRevenue = 0, totalSold = 0, totalACH = 0, totalCard = 0, refundTotal = 0;
+      var achRevenue = 0, cardRevenue = 0, totalRevenue = 0, signups = 0, achCount = 0, cardCount = 0, refundTotal = 0;
       sessions.forEach(function(s) {
-        totalRevenue += s.revenue || 0;
         achRevenue += s.achRevenue || 0;
         cardRevenue += s.cardRevenue || 0;
-        totalSold += s.sold || 0;
-        totalACH += s.achCount || 0;
-        totalCard += s.cardCount || 0;
+        totalRevenue += s.revenue || 0;
+        signups += s.sold || 0;
+        achCount += s.achCount || 0;
+        cardCount += s.cardCount || 0;
         refundTotal += s.refundAmount || 0;
       });
       var refunds = data.refunds || [];
       var refundCount = refunds.length;
       var netRevenue = totalRevenue - refundTotal;
+      var forecast = yearForecastFromSessions(sessions, 90);
 
-      // Store aggregates on data for forecast use
       data.totalRevenue = totalRevenue;
-      data.totalSold = totalSold;
-      data.totalACH = totalACH;
-      data.totalCard = totalCard;
+      data.totalSold = signups;
+      data.totalACH = achCount;
+      data.totalCard = cardCount;
 
-      // Section A: Revenue
-      html += '<div style="font-size:18px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:12px;margin-bottom:20px;">Session Revenue + Signups</div>';
-      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">';
-      html += metricCard('Total Revenue', '$' + totalRevenue.toLocaleString());
-      html += metricCard('Refunds', '-$' + refundTotal.toLocaleString(), '#991b1b');
-      html += metricCard('Net Revenue', '$' + netRevenue.toLocaleString());
-      html += '</div>';
-
-      // Revenue by Session + Signups per Session side by side
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;">';
-      html += '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
-      html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">Revenue per Session</div>';
-      html += '<div style="height:280px;"><canvas id="revenueChart"></canvas></div>';
-      html += '</div>';
-      html += '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
-      html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">Signups per Session</div>';
-      html += '<div style="height:280px;"><canvas id="signupsChart"></canvas></div>';
-      html += '</div>';
+      var html = '';
+      html += '<div class="report-section-head"><h3 class="report-section-title">Session Revenue + Signups</h3></div>';
+      html += '<div class="report-metrics">';
+      html += metricCard('Total Revenue', money(totalRevenue), 'ACH ' + money(achRevenue) + ' \u00B7 Card ' + money(cardRevenue));
+      html += metricCard('Signups', String(signups), achCount + ' ACH \u00B7 ' + cardCount + ' Card');
+      html += metricCard('Refunds', money(-refundTotal), refundCount ? (refundCount + ' refund' + (refundCount !== 1 ? 's' : '')) : 'None recorded', refundTotal > 0);
+      html += metricCard('Net Revenue', money(netRevenue), 'Booked minus refunds');
       html += '</div>';
 
-      // Section C: Forecasted Revenue
-      html += '<div style="font-size:18px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:12px;margin-bottom:20px;">Forecasted Revenue</div>';
-      html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap;">';
-      html += '<div style="display:flex;align-items:center;gap:12px;">';
-      html += '<label style="font-size:14px;font-weight:500;">Expected Fill Rate</label>';
-      html += '<input type="number" id="fill-rate-input" value="90" min="0" max="100" style="width:64px;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;" oninput="updateForecast()" />';
-      html += '<span style="font-size:14px;color:#6b7280;">%</span>';
-      html += '</div>';
-      html += '<div style="flex:1;display:flex;gap:16px;">';
-      html += '<div style="flex:1;background:white;border-radius:12px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;align-items:center;gap:12px;">';
-      html += '<span style="font-size:12px;color:#6b7280;">Max Revenue</span>';
-      html += '<span id="forecast-max-value" style="font-size:24px;font-weight:700;color:#9ca3af;">--</span>';
-      html += '</div>';
-      html += '<div style="flex:1;background:white;border-radius:12px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;align-items:center;gap:12px;">';
-      html += '<span style="font-size:12px;color:#6b7280;">Projected Year Total</span>';
-      html += '<span id="forecast-projected-value" style="font-size:24px;font-weight:700;">--</span>';
-      html += '</div>';
-      html += '</div>';
-      html += '</div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;">';
-      html += '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
-      html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">Per-Session Breakdown</div>';
-      html += '<div style="height:300px;"><canvas id="forecastBarChart"></canvas></div>';
-      html += '</div>';
-      html += '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
-      html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">Cumulative Annual Revenue</div>';
-      html += '<div style="height:300px;"><canvas id="forecastChart"></canvas></div>';
-      html += '</div>';
+      html += '<div class="report-charts">';
+      html += '<div class="report-chart"><div class="report-chart-title">Revenue per Session</div><div class="report-chart-canvas"><canvas id="revenueChart"></canvas></div></div>';
+      html += '<div class="report-chart"><div class="report-chart-title">Signups per Session</div><div class="report-chart-canvas"><canvas id="signupsChart"></canvas></div></div>';
       html += '</div>';
 
-      // Section D: Refunds
-      html += '<div style="font-size:18px;font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:12px;margin-bottom:20px;">Refunds</div>';
+      html += '<div class="report-section-head">';
+      html += '<h3 class="report-section-title">Forecasted Revenue</h3>';
+      html += '<label class="report-fill">Expected Fill Rate <input type="number" id="fill-rate-input" value="90" min="0" max="100" oninput="updateForecast()" /> %</label>';
+      html += '</div>';
+      html += '<div class="report-metrics report-metrics-2">';
+      html += '<div class="report-card"><div class="report-card-label">Full sellout</div><div id="forecast-max-value" class="report-card-value">' + money(forecast.maxRevenue) + '</div><div class="report-card-detail">ACH price \u00D7 seats</div></div>';
+      html += '<div class="report-card"><div class="report-card-label">Projected</div><div id="forecast-projected-value" class="report-card-value">' + money(forecast.projected) + '</div><div class="report-card-detail">At the fill rate above</div></div>';
+      html += '</div>';
+      html += '<div class="report-charts">';
+      html += '<div class="report-chart"><div class="report-chart-title">Per-Session Breakdown</div><div class="report-chart-canvas is-tall"><canvas id="forecastBarChart"></canvas></div></div>';
+      html += '<div class="report-chart"><div class="report-chart-title">Cumulative Annual Revenue</div><div class="report-chart-canvas is-tall"><canvas id="forecastChart"></canvas></div></div>';
+      html += '</div>';
+
+      html += '<div class="report-section-head"><h3 class="report-section-title">Refunds</h3></div>';
       if (refundCount === 0) {
-        html += '<p style="color:#6b7280;font-size:14px;">No refunds recorded</p>';
+        html += '<p class="report-muted">No refunds recorded</p>';
       } else {
-        html += '<p style="font-size:14px;color:#6b7280;margin-bottom:16px;">' + refundCount + ' refund' + (refundCount !== 1 ? 's' : '') + ' totaling $' + refundTotal.toLocaleString() + '</p>';
-        html += '<table style="width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
-        html += '<thead><tr>';
+        html += '<p class="report-muted">' + refundCount + ' refund' + (refundCount !== 1 ? 's' : '') + ' totaling ' + money(refundTotal) + '</p>';
+        html += '<div class="report-table-wrap"><table class="report-table"><thead><tr>';
         ['Session', 'Attendee', 'Email', 'Amount', 'Date'].forEach(function(col) {
-          html += '<th style="text-align:left;padding:10px 14px;color:#6b7280;font-weight:500;border-bottom:1px solid #e5e7eb;font-size:12px;text-transform:uppercase;background:#fafafa;">' + col + '</th>';
+          html += '<th>' + col + '</th>';
         });
         html += '</tr></thead><tbody>';
         refunds.forEach(function(r) {
           html += '<tr>';
-          html += '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (r.sessionDate || '\u2014') + '</td>';
-          html += '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (r.attendeeName || '\u2014') + '</td>';
-          html += '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (r.attendeeEmail || '\u2014') + '</td>';
-          html += '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">$' + (r.amount || 0).toLocaleString() + '</td>';
-          html += '<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:14px;">' + (r.refundDate || '\u2014') + '</td>';
+          html += '<td>' + (r.sessionDate || '\u2014') + '</td>';
+          html += '<td>' + (r.attendeeName || '\u2014') + '</td>';
+          html += '<td>' + (r.attendeeEmail || '\u2014') + '</td>';
+          html += '<td>' + money(r.amount || 0) + '</td>';
+          html += '<td>' + (r.refundDate || '\u2014') + '</td>';
           html += '</tr>';
         });
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
       }
 
       if (body) body.innerHTML = html;
-
-      // Render charts after DOM is updated
       setTimeout(function() { renderCharts(data); }, 50);
     }
 
-    function metricCard(label, value, valueColor) {
-      var color = valueColor || '#1a1a1a';
-      return '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">'
-        + '<div style="font-size:12px;color:#6b7280;margin-bottom:4px;">' + label + '</div>'
-        + '<div style="font-size:24px;font-weight:700;color:' + color + ';">' + value + '</div>'
+    function metricCard(label, value, detail, isRefund) {
+      return '<div class="report-card">'
+        + '<div class="report-card-label">' + label + '</div>'
+        + '<div class="report-card-value' + (isRefund ? ' is-refund' : '') + '">' + value + '</div>'
+        + (detail ? '<div class="report-card-detail">' + detail + '</div>' : '')
         + '</div>';
+    }
+
+    function forecastOne(s, fillRate) {
+      var actual = s.revenue || 0;
+      var maxSeats = s.maxSeats || 25;
+      var basePrice = s.priceAchAmount || 950;
+      var maxRevenue = maxSeats * basePrice;
+      var expected;
+      if (s.isPast) {
+        expected = actual;
+      } else {
+        var remaining = s.remaining || 0;
+        var sold = s.sold || 0;
+        expected = (sold + Math.round(remaining * (fillRate / 100))) * basePrice;
+      }
+      return { maxRevenue: maxRevenue, expected: expected, actual: actual };
+    }
+
+    function yearForecastFromSessions(sessions, fillRate) {
+      var perMax = [], perExpected = [], perActual = [];
+      var cumMax = [], cumExpected = [], cumActual = [];
+      var maxRevenue = 0, projected = 0, actual = 0;
+      sessions.forEach(function(s) {
+        var f = forecastOne(s, fillRate);
+        perMax.push(f.maxRevenue);
+        perExpected.push(f.expected);
+        perActual.push(f.actual);
+        maxRevenue += f.maxRevenue;
+        projected += f.expected;
+        actual += f.actual;
+        cumMax.push(maxRevenue);
+        cumExpected.push(projected);
+        cumActual.push(actual);
+      });
+      return {
+        perMax: perMax, perExpected: perExpected, perActual: perActual,
+        cumMax: cumMax, cumExpected: cumExpected, cumActual: cumActual,
+        maxRevenue: maxRevenue, projected: projected, actual: actual
+      };
     }
 
     function shortDate(dateStr) {
@@ -430,11 +680,31 @@ import workshop from "../data/workshop.json";
       return parts[1] + '/' + parts[2];
     }
 
+    function chartLegend() {
+      return {
+        position: 'top',
+        align: 'end',
+        labels: { boxWidth: 10, boxHeight: 10, padding: 14, font: { size: 11 }, color: '#445777' }
+      };
+    }
+
+    function moneyAxis(stacked) {
+      return {
+        x: { stacked: !!stacked, grid: { display: false }, ticks: { color: '#445777', font: { size: 11 } }, border: { display: false } },
+        y: {
+          stacked: !!stacked,
+          beginAtZero: true,
+          grid: { color: '#E5E8EB' },
+          ticks: { color: '#445777', font: { size: 11 }, callback: function(v) { return '$' + v.toLocaleString(); } },
+          border: { display: false }
+        }
+      };
+    }
+
     function renderCharts(data) {
       var sessions = data.sessions || [];
       var labels = sessions.map(function(s) { return shortDate(s.date); });
 
-      // Revenue chart (stacked ACH + Card, vertical bar)
       if (revenueChart) { revenueChart.destroy(); revenueChart = null; }
       var revCtx = document.getElementById('revenueChart');
       if (revCtx) {
@@ -443,33 +713,19 @@ import workshop from "../data/workshop.json";
           data: {
             labels: labels,
             datasets: [
-              {
-                label: 'ACH',
-                data: sessions.map(function(s) { return s.achRevenue || 0; }),
-                backgroundColor: '#f97316',
-                borderRadius: 4
-              },
-              {
-                label: 'Card',
-                data: sessions.map(function(s) { return s.cardRevenue || 0; }),
-                backgroundColor: '#fbbf24',
-                borderRadius: 4
-              }
+              { label: 'ACH', data: sessions.map(function(s) { return s.achRevenue || 0; }), backgroundColor: '#FF7900', borderRadius: 4, maxBarThickness: 48 },
+              { label: 'Card', data: sessions.map(function(s) { return s.cardRevenue || 0; }), backgroundColor: '#445777', borderRadius: 4, maxBarThickness: 48 }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'top' } },
-            scales: {
-              x: { stacked: true, grid: { display: false } },
-              y: { stacked: true, ticks: { callback: function(v) { return '$' + v.toLocaleString(); } } }
-            }
+            plugins: { legend: chartLegend() },
+            scales: moneyAxis(true)
           }
         });
       }
 
-      // Signups chart (vertical bar)
       if (signupsChart) { signupsChart.destroy(); signupsChart = null; }
       var sigCtx = document.getElementById('signupsChart');
       if (sigCtx) {
@@ -480,8 +736,9 @@ import workshop from "../data/workshop.json";
             datasets: [{
               label: 'Signups',
               data: sessions.map(function(s) { return s.sold || 0; }),
-              backgroundColor: '#3b82f6',
-              borderRadius: 4
+              backgroundColor: '#142233',
+              borderRadius: 4,
+              maxBarThickness: 48
             }]
           },
           options: {
@@ -489,88 +746,42 @@ import workshop from "../data/workshop.json";
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              x: { grid: { display: false } },
-              y: { beginAtZero: true, ticks: { stepSize: 1 } }
+              x: { grid: { display: false }, ticks: { color: '#445777', font: { size: 11 } }, border: { display: false } },
+              y: { beginAtZero: true, ticks: { stepSize: 1, color: '#445777', font: { size: 11 } }, grid: { color: '#E5E8EB' }, border: { display: false } }
             }
           }
         });
       }
 
-      // Forecast chart
       updateForecast();
     }
 
     function updateForecast() {
       if (!currentReportData) return;
-      var data = currentReportData;
-      var sessions = data.sessions || [];
-      var totalRevenue = data.totalRevenue || 0;
-      var totalSold = data.totalSold || 0;
+      var sessions = currentReportData.sessions || [];
       var fillInput = document.getElementById('fill-rate-input');
       var fillRate = fillInput ? parseFloat(fillInput.value) || 0 : 90;
-      var labels = [];
-      // Per-session bars
-      var perMaxData = [];
-      var perExpectedData = [];
-      var perActualData = [];
-      // Cumulative lines
-      var cumMaxData = [];
-      var cumExpectedData = [];
-      var cumActualData = [];
-      var cumMax = 0, cumExpected = 0, cumActual = 0;
+      var labels = sessions.map(function(s) { return shortDate(s.date); });
+      var forecast = yearForecastFromSessions(sessions, fillRate);
 
-      sessions.forEach(function(s) {
-        labels.push(shortDate(s.date));
-        var actual = s.revenue || 0;
-        var maxSeats = s.maxSeats || 25;
-        var basePrice = s.priceAchAmount || 950;
-        var maxRevenue = maxSeats * basePrice;
-        var expected;
-
-        if (s.isPast) {
-          expected = actual;
-        } else {
-          var remaining = s.remaining || 0;
-          var sold = s.sold || 0;
-          var expectedSeats = sold + Math.round(remaining * (fillRate / 100));
-          expected = expectedSeats * basePrice;
-        }
-
-        // Per-session values
-        perMaxData.push(maxRevenue);
-        perExpectedData.push(expected);
-        perActualData.push(actual);
-
-        // Cumulative values
-        cumMax += maxRevenue;
-        cumExpected += expected;
-        cumActual += actual;
-        cumMaxData.push(cumMax);
-        cumExpectedData.push(cumExpected);
-        cumActualData.push(cumActual);
-      });
-
-      // Update big numbers
       var maxEl = document.getElementById('forecast-max-value');
-      if (maxEl) maxEl.textContent = '$' + cumMax.toLocaleString();
+      if (maxEl) maxEl.textContent = money(forecast.maxRevenue);
       var projectedEl = document.getElementById('forecast-projected-value');
-      if (projectedEl) projectedEl.textContent = '$' + cumExpected.toLocaleString();
+      if (projectedEl) projectedEl.textContent = money(forecast.projected);
 
-      // Per-session grouped bar chart (left)
       if (forecastBarChart) { forecastBarChart.destroy(); forecastBarChart = null; }
       var barCtx = document.getElementById('forecastBarChart');
       if (barCtx) {
-        // Use separate x-axes stacked on top of each other to overlay bars
         forecastBarChart = new Chart(barCtx, {
           type: 'bar',
           data: {
             labels: labels,
             datasets: [
               {
-                label: 'Max',
-                data: perMaxData,
-                backgroundColor: 'rgba(209,213,219,0.4)',
-                borderColor: '#d1d5db',
+                label: 'Full sellout',
+                data: forecast.perMax,
+                backgroundColor: '#E5E8EB',
+                borderColor: '#E5E8EB',
                 borderWidth: 1,
                 borderRadius: 4,
                 xAxisID: 'x',
@@ -579,9 +790,9 @@ import workshop from "../data/workshop.json";
               },
               {
                 label: 'Expected',
-                data: perExpectedData,
-                backgroundColor: 'rgba(251,191,36,0.7)',
-                borderColor: '#fbbf24',
+                data: forecast.perExpected,
+                backgroundColor: '#FBEDE2',
+                borderColor: '#445777',
                 borderWidth: 1,
                 borderRadius: 4,
                 xAxisID: 'x2',
@@ -590,8 +801,8 @@ import workshop from "../data/workshop.json";
               },
               {
                 label: 'Actual',
-                data: perActualData,
-                backgroundColor: '#f97316',
+                data: forecast.perActual,
+                backgroundColor: '#FF7900',
                 borderRadius: 4,
                 xAxisID: 'x3',
                 barPercentage: 0.35,
@@ -602,18 +813,22 @@ import workshop from "../data/workshop.json";
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'top' } },
+            plugins: { legend: chartLegend() },
             scales: {
-              x: { grid: { display: false } },
+              x: { grid: { display: false }, ticks: { color: '#445777', font: { size: 11 } }, border: { display: false } },
               x2: { display: false, grid: { display: false } },
               x3: { display: false, grid: { display: false } },
-              y: { ticks: { callback: function(v) { return '$' + v.toLocaleString(); } } }
+              y: {
+                beginAtZero: true,
+                ticks: { color: '#445777', font: { size: 11 }, callback: function(v) { return '$' + v.toLocaleString(); } },
+                grid: { color: '#E5E8EB' },
+                border: { display: false }
+              }
             }
           }
         });
       }
 
-      // Cumulative line chart (right)
       if (forecastChart) { forecastChart.destroy(); forecastChart = null; }
       var fcCtx = document.getElementById('forecastChart');
       if (fcCtx) {
@@ -623,27 +838,29 @@ import workshop from "../data/workshop.json";
             labels: labels,
             datasets: [
               {
-                label: 'Max Revenue',
-                data: cumMaxData,
-                borderColor: '#d1d5db',
+                label: 'Full sellout',
+                data: forecast.cumMax,
+                borderColor: '#445777',
                 borderDash: [6, 3],
-                pointRadius: 3,
+                borderWidth: 1.5,
+                pointRadius: 0,
                 tension: 0.2,
                 fill: false
               },
               {
                 label: 'Expected',
-                data: cumExpectedData,
-                borderColor: '#fbbf24',
-                pointRadius: 4,
+                data: forecast.cumExpected,
+                borderColor: '#142233',
+                pointRadius: 3,
+                borderWidth: 2,
                 tension: 0.2,
                 fill: false
               },
               {
                 label: 'Actual',
-                data: cumActualData,
-                borderColor: '#f97316',
-                pointRadius: 5,
+                data: forecast.cumActual,
+                borderColor: '#FF7900',
+                pointRadius: 4,
                 borderWidth: 3,
                 tension: 0.2,
                 fill: false
@@ -653,11 +870,8 @@ import workshop from "../data/workshop.json";
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'top' } },
-            scales: {
-              x: { grid: { display: false } },
-              y: { ticks: { callback: function(v) { return '$' + v.toLocaleString(); } } }
-            }
+            plugins: { legend: chartLegend() },
+            scales: moneyAxis(false)
           }
         });
       }

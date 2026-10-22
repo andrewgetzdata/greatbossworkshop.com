@@ -61,3 +61,43 @@ export function forecastSession(s: SessionStat, fillRate = DEFAULT_FILL_RATE): S
 
   return { maxRevenue, maxRemaining, expected, actual };
 }
+
+export interface YearForecast {
+  perMax: number[];
+  perExpected: number[];
+  perActual: number[];
+  cumMax: number[];
+  cumExpected: number[];
+  cumActual: number[];
+  maxRevenue: number;
+  projected: number;
+  actual: number;
+}
+
+/** Sum per-session forecasts into the year-level bar and cumulative series. */
+export function forecastYear(sessions: SessionStat[], fillRate = DEFAULT_FILL_RATE): YearForecast {
+  const perMax: number[] = [];
+  const perExpected: number[] = [];
+  const perActual: number[] = [];
+  const cumMax: number[] = [];
+  const cumExpected: number[] = [];
+  const cumActual: number[] = [];
+  let maxRevenue = 0;
+  let projected = 0;
+  let actual = 0;
+
+  for (const session of sessions) {
+    const forecast = forecastSession(session, fillRate);
+    perMax.push(forecast.maxRevenue);
+    perExpected.push(forecast.expected);
+    perActual.push(forecast.actual);
+    maxRevenue += forecast.maxRevenue;
+    projected += forecast.expected;
+    actual += forecast.actual;
+    cumMax.push(maxRevenue);
+    cumExpected.push(projected);
+    cumActual.push(actual);
+  }
+
+  return { perMax, perExpected, perActual, cumMax, cumExpected, cumActual, maxRevenue, projected, actual };
+}
