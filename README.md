@@ -191,7 +191,7 @@ The response is `202` immediately, which only means Netlify started the function
 4. Click a session — attendee table should load with name, email, amount, method, date, status. Past classes are listed too.
 5. Click **Export CSV** — downloads that class's attendees with the stored checkout fields (any class, not only past events)
 6. Click **Refund** on a paid row and confirm — refunds the full remaining amount in Stripe and refreshes the row
-7. Choose a year and click **Annual report** — downloads full-sellout revenue, actual revenue, and the gap
+7. Click **Report**, then the download icon at the top right — downloads full-sellout revenue, actual revenue, and the gap for the year shown on the charts
 8. Click **Sign out** — should return to login screen
 
 #### 8. Session Date Cards
